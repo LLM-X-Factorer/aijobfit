@@ -1,6 +1,9 @@
 services:
   aijobfit:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: https://aijobfit.llmxfactor.cloud
     container_name: aijobfit
     restart: unless-stopped
     ports:
