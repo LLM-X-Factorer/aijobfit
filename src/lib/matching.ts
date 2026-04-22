@@ -153,5 +153,5 @@ export function matchUserToRoles(
     });
 
   matches.sort((a, b) => b.matchScore - a.matchScore);
-  return matches.slice(0, 3);
+  return matches;
 }

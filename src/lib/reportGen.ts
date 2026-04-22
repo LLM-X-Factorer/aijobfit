@@ -196,9 +196,11 @@ export function generateReport(
   skills: Skill[],
   reportId: string,
 ): Report {
-  const matches = matchUserToRoles(input, roles, skills);
-  const top = matches[0];
-  const trackScores = calcTrackScores(matches);
+  const allMatches = matchUserToRoles(input, roles, skills);
+  const topMatches = allMatches.slice(0, 3);
+  const top = topMatches[0];
+  // calcTrackScores 走全量匹配，否则 top 3 若不含 track 对应角色，4 主线会全 0
+  const trackScores = calcTrackScores(allMatches);
   const topTrack = trackScores
     .filter((t) => t.score > 0)
     .sort((a, b) => b.score - a.score)[0]?.track || null;
@@ -212,7 +214,7 @@ export function generateReport(
       education: input.education,
       city: input.city,
       trackScores,
-      topRoles: matches.map((m) => ({
+      topRoles: topMatches.map((m) => ({
         roleName: m.roleName,
         matchScore: m.matchScore,
       })),
@@ -220,7 +222,7 @@ export function generateReport(
       generatedAt,
     },
     roles: {
-      topMatches: matches,
+      topMatches,
       totalRoles: 14,
       totalJDs: JD_TOTAL,
     },
