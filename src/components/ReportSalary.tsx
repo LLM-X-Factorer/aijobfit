@@ -19,11 +19,11 @@ export default function ReportSalary({ data }: { data: SalaryData }) {
   const pct = (val: number) => `${Math.max(0, Math.min(100, ((val - visMin) / visRange) * 100))}%`;
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8">
+    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8">
       <h2 className="text-2xl font-black text-slate-900 mb-2">第 3 节 · 薪资定位</h2>
       <p className="text-sm text-slate-500 mb-6">{data.message}</p>
 
-      <div className="bg-slate-50 rounded-xl p-6">
+      <div className="bg-slate-50 rounded-xl p-4 sm:p-6">
         <p className="text-sm font-bold text-slate-700 mb-4">
           {data.topRoleName} 的薪资分布（月薪 / 元）
         </p>

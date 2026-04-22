@@ -25,7 +25,10 @@ export const metadata: Metadata = {
     description: "用真实招聘数据指路，不卖课，不催单。",
     type: "website",
     url: "/",
-    images: [{ url: "/api/og", width: 1200, height: 630 }],
+    images: [
+      { url: "/api/og", width: 1200, height: 630 },
+      { url: "/api/og-square", width: 800, height: 800 },
+    ],
   },
   twitter: {
     card: "summary_large_image",

@@ -2,7 +2,7 @@ import { RolesData } from "@/lib/reportGen";
 
 export default function ReportRoles({ data }: { data: RolesData }) {
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8">
+    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8">
       <h2 className="text-2xl font-black text-slate-900 mb-2">第 2 节 · 市场全景</h2>
       <p className="text-sm text-slate-500 mb-6">
         基于国内 {data.totalJDs.toLocaleString()} 条真实 JD 聚类的 {data.totalRoles} 个 AI

@@ -4,11 +4,13 @@ import { generateReport } from "@/lib/reportGen";
 import { loadRoles, loadSkills } from "@/lib/serverData";
 import { loadNotoSansSC } from "@/lib/ogFont";
 
+// 800×800 方形 OG，供微信聊天卡片使用（微信偏好正方形图）。
+// 内容精简：品牌 + Top 1 角色 + 匹配度 + 薪资中位。
+
 export const runtime = "nodejs";
-// 报告 hash 决定内容，可安全缓存。ISR-friendly。
 export const revalidate = false;
 
-const BRAND = "#2563EB"; // 冷蓝
+const BRAND = "#2563EB";
 const TEXT_DARK = "#0F172A";
 const TEXT_MUTED = "#64748B";
 const BG_SOFT = "#F1F5F9";
@@ -39,7 +41,7 @@ export async function GET(
     const top = report.cover.topRoles[0];
     const topRole = top?.roleName || "—";
     const topScore = top?.matchScore ?? 0;
-    const { p25, p50, p75 } = report.salary;
+    const { p50 } = report.salary;
     const hasSalary = p50 > 0;
 
     const fonts = [
@@ -70,14 +72,12 @@ export async function GET(
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            background: "linear-gradient(135deg, #FFFFFF 0%, #EFF6FF 100%)",
+            background: "linear-gradient(160deg, #FFFFFF 0%, #EFF6FF 100%)",
             fontFamily: "Noto Sans SC, sans-serif",
             color: TEXT_DARK,
-            padding: "56px 64px",
-            position: "relative",
+            padding: 56,
           }}
         >
-          {/* 品牌 */}
           <div
             style={{
               display: "flex",
@@ -86,14 +86,13 @@ export async function GET(
               fontSize: 22,
               color: BRAND,
               fontWeight: 700,
-              letterSpacing: 1,
             }}
           >
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
+                width: 40,
+                height: 40,
+                borderRadius: 10,
                 background: BRAND,
                 display: "flex",
                 alignItems: "center",
@@ -105,15 +104,15 @@ export async function GET(
             >
               AI
             </div>
-            <span>AIJobFit · 非程序员 AI 求职定位诊断</span>
+            <span>AIJobFit</span>
           </div>
 
-          {/* Top 1 角色 */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              marginTop: 48,
+              marginTop: 56,
+              flex: 1,
             }}
           >
             <div
@@ -121,130 +120,90 @@ export async function GET(
                 fontSize: 22,
                 color: TEXT_MUTED,
                 marginBottom: 8,
-                fontWeight: 400,
               }}
             >
-              Top 1 角色匹配
+              你最匹配的 AI 角色
             </div>
             <div
               style={{
-                fontSize: 64,
+                fontSize: 52,
                 fontWeight: 700,
-                lineHeight: 1.1,
+                lineHeight: 1.15,
                 color: TEXT_DARK,
-                maxWidth: 960,
               }}
             >
               {topRole}
             </div>
-            <div
-              style={{
-                marginTop: 18,
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 6,
-                  padding: "8px 18px",
-                  background: BRAND,
-                  color: "white",
-                  borderRadius: 999,
-                  fontSize: 24,
-                  fontWeight: 700,
-                }}
-              >
-                <span>匹配度</span>
-                <span style={{ fontSize: 32 }}>{topScore}</span>
-                <span style={{ fontSize: 20 }}>%</span>
-              </div>
-            </div>
-          </div>
 
-          {/* 薪资区间卡 */}
-          {hasSalary && (
             <div
               style={{
+                marginTop: 28,
                 display: "flex",
-                marginTop: 48,
-                padding: "24px 32px",
-                background: BG_SOFT,
-                borderRadius: 20,
-                border: `1px solid #DBEAFE`,
-                alignItems: "center",
-                gap: 40,
+                alignItems: "baseline",
+                gap: 14,
+                padding: "14px 24px",
+                background: BRAND,
+                color: "white",
+                borderRadius: 999,
+                fontWeight: 700,
+                alignSelf: "flex-start",
               }}
             >
+              <span style={{ fontSize: 22 }}>匹配度</span>
+              <span style={{ fontSize: 44 }}>{topScore}</span>
+              <span style={{ fontSize: 24 }}>%</span>
+            </div>
+
+            {hasSalary && (
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                  minWidth: 140,
-                }}
-              >
-                <span style={{ fontSize: 18, color: TEXT_MUTED }}>月薪区间</span>
-                <span
-                  style={{
-                    fontSize: 22,
-                    color: TEXT_DARK,
-                    fontWeight: 700,
-                  }}
-                >
-                  P25 – P75
-                </span>
-              </div>
-              <div
-                style={{
+                  marginTop: 40,
+                  padding: "20px 28px",
+                  background: BG_SOFT,
+                  borderRadius: 20,
+                  border: `1px solid #DBEAFE`,
                   display: "flex",
                   alignItems: "baseline",
-                  gap: 16,
-                  fontWeight: 700,
-                  color: TEXT_DARK,
+                  gap: 14,
                 }}
               >
-                <span style={{ fontSize: 24, color: TEXT_MUTED }}>
-                  {fmtSalary(p25)}
+                <span style={{ fontSize: 20, color: TEXT_MUTED }}>
+                  月薪中位
                 </span>
-                <span style={{ fontSize: 44, color: BRAND }}>
+                <span
+                  style={{ fontSize: 40, color: BRAND, fontWeight: 700 }}
+                >
                   {fmtSalary(p50)}
                 </span>
-                <span style={{ fontSize: 24, color: TEXT_MUTED }}>
-                  {fmtSalary(p75)}
+                <span style={{ fontSize: 18, color: TEXT_MUTED }}>
+                  / 月
                 </span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* 底栏：数据来源 */}
           <div
             style={{
               display: "flex",
-              marginTop: "auto",
               justifyContent: "space-between",
               alignItems: "center",
-              fontSize: 18,
+              fontSize: 16,
               color: TEXT_MUTED,
             }}
           >
-            <span>数据来源：Agent Hunt · 2370+ 真实 JD</span>
+            <span>Agent Hunt · 2370+ 真实 JD</span>
             <span style={{ fontFamily: "monospace" }}>#{reportId}</span>
           </div>
         </div>
       ),
       {
-        width: 1200,
-        height: 630,
+        width: 800,
+        height: 800,
         fonts: fonts.length > 0 ? fonts : undefined,
       },
     );
   } catch (e) {
-    console.error("OG generation failed:", e);
-    // Fallback 静态 OG：报告解码失败时返回通用品牌图
+    console.error("Square OG generation failed:", e);
     return new ImageResponse(
       (
         <div
@@ -262,20 +221,20 @@ export async function GET(
         >
           <div
             style={{
-              fontSize: 72,
+              fontSize: 64,
               fontWeight: 700,
               color: BRAND,
-              marginBottom: 16,
+              marginBottom: 12,
             }}
           >
             AIJobFit
           </div>
-          <div style={{ fontSize: 28, color: TEXT_MUTED }}>
-            AI Job Positioning · 9.9 RMB Diagnosis
+          <div style={{ fontSize: 24, color: TEXT_MUTED }}>
+            AI Career Diagnosis
           </div>
         </div>
       ),
-      { width: 1200, height: 630 },
+      { width: 800, height: 800 },
     );
   }
 }

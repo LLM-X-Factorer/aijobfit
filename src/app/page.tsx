@@ -29,7 +29,7 @@ export default function Home() {
   return (
     <main className="flex-1 flex flex-col bg-grid">
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+      <section className="flex-1 flex flex-col items-center justify-center px-4 py-14 sm:py-20 text-center">
         <p className="text-xs font-mono tracking-widest text-blue-600 uppercase mb-4">
           AI Career Fit Diagnosis · v0.1
         </p>
@@ -47,12 +47,12 @@ export default function Home() {
 
         <Link
           href="/diagnose"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
+          className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
         >
           免费做一次诊断 →
         </Link>
         <p className="text-xs text-slate-400 mt-3">
-          Phase 1 公测中，全部功能免费 · 无需注册
+          永久免费 · 无需注册 · 10 分钟出报告
         </p>
 
         {/* 数据锚点 */}
@@ -67,12 +67,12 @@ export default function Home() {
       </section>
 
       {/* 卖点 */}
-      <section className="px-4 pb-20">
+      <section className="px-4 pb-16 sm:pb-20">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
           {SELLING_POINTS.map((p) => (
             <div
               key={p.title}
-              className="bg-white border border-blue-100 rounded-2xl p-6 shadow-sm"
+              className="bg-white border border-blue-100 rounded-2xl p-5 sm:p-6 shadow-sm"
             >
               <div className="text-3xl mb-3">{p.icon}</div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">{p.title}</h3>

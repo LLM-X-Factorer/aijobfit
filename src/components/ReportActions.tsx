@@ -15,7 +15,7 @@ export default function ReportActions({
 
   return (
     <>
-      <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8">
+      <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8">
         <h2 className="text-2xl font-black text-slate-900 mb-2">第 6 节 · 7 / 30 / 90 天行动</h2>
         <p className="text-sm text-slate-500 mb-6">
           不绑定任何路径，纯执行建议。90 天后重新做一次诊断，对比你的 Gap 缩小了多少。
@@ -41,7 +41,7 @@ export default function ReportActions({
       </section>
 
       {/* 第 7 节 · 附录（合并到 Actions 文件减少组件数量） */}
-      <section className="bg-slate-50 rounded-2xl border border-slate-200 p-8">
+      <section className="bg-slate-50 rounded-2xl border border-slate-200 p-5 sm:p-8">
         <h2 className="text-xl font-black text-slate-900 mb-2">第 7 节 · 报告生成依据</h2>
         <div className="text-sm text-slate-600 space-y-2">
           <p>

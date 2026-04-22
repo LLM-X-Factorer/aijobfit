@@ -5,6 +5,8 @@ import Link from "next/link";
 import { decodeInput } from "@/lib/encoding";
 import { fetchRoles, fetchSkills } from "@/lib/fetchAgentHunt";
 import { generateReport, Report } from "@/lib/reportGen";
+import { track } from "@/lib/track";
+import { isWeChat } from "@/lib/useragent";
 import ReportCover from "@/components/ReportCover";
 import ReportRoles from "@/components/ReportRoles";
 import ReportSalary from "@/components/ReportSalary";
@@ -12,11 +14,14 @@ import ReportGap from "@/components/ReportGap";
 import ReportPaths from "@/components/ReportPaths";
 import ReportActions from "@/components/ReportActions";
 import SharePoster from "@/components/SharePoster";
+import LockedSections from "@/components/LockedSections";
+
+type CopyState = "idle" | "copied" | "wechat-hint" | "failed";
 
 export default function ReportClient({ hash }: { hash: string }) {
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>("idle");
 
   useEffect(() => {
     async function load() {
@@ -26,6 +31,11 @@ export default function ReportClient({ hash }: { hash: string }) {
         const reportId = hash.slice(0, 8).toUpperCase();
         const r = generateReport(input, roles, skills, reportId);
         setReport(r);
+        track("report_view", {
+          report_id: reportId,
+          top_role: r.cover.topRoles[0]?.roleName,
+          top_score: r.cover.topRoles[0]?.matchScore,
+        });
       } catch (e) {
         console.error(e);
         setError(e instanceof Error ? e.message : "报告加载失败");
@@ -34,13 +44,48 @@ export default function ReportClient({ hash }: { hash: string }) {
     load();
   }, [hash]);
 
-  function copyUrl() {
+  async function copyUrl() {
     if (typeof window === "undefined") return;
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    const url = window.location.href;
+
+    if (isWeChat()) {
+      setCopyState("wechat-hint");
+      setTimeout(() => setCopyState("idle"), 3500);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 2000);
+      return;
+    } catch {
+      // clipboard 不可用（iOS 低版本 / 权限问题），退到 execCommand
+    }
+
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 2000);
+    } catch {
+      setCopyState("failed");
+      setTimeout(() => setCopyState("idle"), 3000);
+    }
   }
+
+  const copyLabel: Record<CopyState, string> = {
+    idle: "复制链接",
+    copied: "✓ 已复制",
+    "wechat-hint": "点右上角 · 复制链接",
+    failed: "复制失败",
+  };
 
   if (error) {
     return (
@@ -78,21 +123,13 @@ export default function ReportClient({ hash }: { hash: string }) {
             ← AIJobFit
           </Link>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled
-              className="text-xs text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full cursor-not-allowed"
-              title="Phase 2 后续实现"
-            >
-              下载 PDF（Coming Soon）
-            </button>
             <SharePoster report={report} />
             <button
               type="button"
               onClick={copyUrl}
-              className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1.5 rounded-full"
+              className="text-xs bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-3 py-2 rounded-full whitespace-nowrap"
             >
-              {copied ? "✓ 已复制" : "复制链接"}
+              {copyLabel[copyState]}
             </button>
           </div>
         </div>
@@ -102,9 +139,11 @@ export default function ReportClient({ hash }: { hash: string }) {
         <ReportCover data={report.cover} />
         <ReportRoles data={report.roles} />
         <ReportSalary data={report.salary} />
-        <ReportGap data={report.gap} />
-        <ReportPaths data={report.paths} />
-        <ReportActions actions={report.actions} meta={report.meta} />
+        <LockedSections>
+          <ReportGap data={report.gap} />
+          <ReportPaths data={report.paths} />
+          <ReportActions actions={report.actions} meta={report.meta} />
+        </LockedSections>
       </div>
 
       <footer className="border-t border-slate-200 px-4 py-6 text-center text-xs text-slate-500 bg-white">

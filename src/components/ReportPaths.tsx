@@ -40,14 +40,14 @@ export default function ReportPaths({ data }: { data: PathsData }) {
   const trackKey = track?.id || "A";
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8">
+    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8">
       <h2 className="text-2xl font-black text-slate-900 mb-2">第 5 节 · 3 种学习路径</h2>
       <p className="text-sm text-slate-500 mb-6">
         我们诚实推荐 3 种路径，包括你完全可以自学的免费资源。不为了卖课贬低自学。
       </p>
 
       {/* 路径 A：自学 */}
-      <div className="border border-slate-200 rounded-xl p-5 mb-4">
+      <div className="border border-slate-200 rounded-xl p-4 sm:p-5 mb-4">
         <h3 className="text-lg font-bold text-slate-900 mb-1">
           路径 A · 自学（免费 / 适合时间充裕 + 自驱力强）
         </h3>
@@ -103,7 +103,7 @@ export default function ReportPaths({ data }: { data: PathsData }) {
       </div>
 
       {/* 路径 B：3800 就业班 */}
-      <div className="border border-blue-200 rounded-xl p-5 mb-4 bg-blue-50/30">
+      <div className="border border-blue-200 rounded-xl p-4 sm:p-5 mb-4 bg-blue-50/30">
         <h3 className="text-lg font-bold text-slate-900 mb-1">
           路径 B · 3800 就业班（适合需要节奏感 + 教练 + 同伴）
         </h3>
@@ -126,7 +126,7 @@ export default function ReportPaths({ data }: { data: PathsData }) {
       </div>
 
       {/* 路径 C：1V1 */}
-      <div className="border border-slate-200 rounded-xl p-5">
+      <div className="border border-slate-200 rounded-xl p-4 sm:p-5">
         <h3 className="text-lg font-bold text-slate-900 mb-1">
           路径 C · 1V1 深度服务（999+，规划中）
         </h3>

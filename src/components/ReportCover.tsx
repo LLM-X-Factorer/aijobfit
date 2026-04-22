@@ -2,7 +2,7 @@ import { CoverData } from "@/lib/reportGen";
 
 export default function ReportCover({ data }: { data: CoverData }) {
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8 md:p-12">
+    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8 md:p-12">
       <p className="text-sm font-mono tracking-widest text-blue-600 uppercase mb-3">
         AI Career Diagnosis · Report #{data.reportId}
       </p>
@@ -33,8 +33,8 @@ export default function ReportCover({ data }: { data: CoverData }) {
         <h3 className="text-sm font-bold text-slate-700 mb-3">你和 4 主线的匹配度</h3>
         <div className="space-y-2">
           {data.trackScores.map(({ track, score }) => (
-            <div key={track.id} className="flex items-center gap-3">
-              <span className="w-32 md:w-40 text-sm font-medium text-slate-700 shrink-0">
+            <div key={track.id} className="flex items-center gap-2 sm:gap-3">
+              <span className="w-24 sm:w-32 md:w-40 text-xs sm:text-sm font-medium text-slate-700 shrink-0">
                 {track.id} · {track.name}
               </span>
               <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">

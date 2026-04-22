@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FORM_FIELDS, STEP_TITLES, FormField } from "@/data/form-fields";
 import { encodeInput, UserInput } from "@/lib/encoding";
+import { track } from "@/lib/track";
 
 type FormState = Record<string, string | string[] | number>;
 
@@ -23,6 +24,7 @@ export default function DiagnosisForm() {
   });
   const [customSkill, setCustomSkill] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const startedAtRef = useRef<number>(Date.now());
 
   const fieldsForStep = FORM_FIELDS.filter((f) => f.step === step);
 
@@ -91,6 +93,15 @@ export default function DiagnosisForm() {
       }
     }
     const hash = encodeInput(input);
+    const filledCount = Object.values(state).filter((v) =>
+      Array.isArray(v) ? v.length > 0 : v !== "" && v != null,
+    ).length;
+    track("form_submit", {
+      duration_ms: Date.now() - startedAtRef.current,
+      filled_fields: filledCount,
+      skills_count: (input.skills || []).length,
+      target_tracks: (input.targetTrack || []).join(","),
+    });
     router.push(`/result/${hash}`);
   }
 
@@ -110,7 +121,7 @@ export default function DiagnosisForm() {
         </div>
       </div>
 
-      <div className="bg-white border border-blue-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+      <div className="bg-white border border-blue-100 rounded-2xl p-5 sm:p-6 md:p-8 shadow-sm space-y-6">
         {fieldsForStep.map((f) => (
           <FieldRender
             key={f.id}
@@ -188,7 +199,7 @@ function FieldRender({
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="mt-2 w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-900"
+          className="mt-2 w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-900 text-base"
         />
       </div>
     );
@@ -201,7 +212,7 @@ function FieldRender({
         <select
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
-          className="mt-2 w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-900 bg-white"
+          className="mt-2 w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-900 bg-white text-base"
         >
           <option value="">请选择</option>
           {field.options?.map((opt) => (
@@ -227,7 +238,7 @@ function FieldRender({
                 key={opt}
                 type="button"
                 onClick={() => onToggleMulti(opt)}
-                className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                className={`text-sm px-3.5 py-2 rounded-full border transition-colors ${
                   on
                     ? "bg-blue-600 text-white border-blue-600"
                     : "bg-white text-slate-700 border-slate-200 hover:border-blue-400"
@@ -246,7 +257,7 @@ function FieldRender({
               value={customSkill}
               onChange={(e) => setCustomSkill(e.target.value)}
               placeholder="自定义技能（如：飞书多维表格）"
-              className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+              className="flex-1 px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-base"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -257,7 +268,7 @@ function FieldRender({
             <button
               type="button"
               onClick={addCustomSkill}
-              className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg"
+              className="text-sm bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg shrink-0"
             >
               添加
             </button>

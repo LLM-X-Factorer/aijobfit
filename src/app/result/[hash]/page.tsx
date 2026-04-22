@@ -15,6 +15,7 @@ export async function generateMetadata({
     const description =
       "基于 2370+ 真实 JD 数据的 AI 求职定位诊断，10 分钟，14 角色匹配，诚实推免费学习资源。";
     const ogUrl = `/api/og/${hash}`;
+    const ogSquareUrl = `/api/og-square/${hash}`;
     return {
       title,
       description,
@@ -23,7 +24,10 @@ export async function generateMetadata({
         description,
         url: `/result/${hash}`,
         type: "article",
-        images: [{ url: ogUrl, width: 1200, height: 630 }],
+        images: [
+          { url: ogUrl, width: 1200, height: 630 },
+          { url: ogSquareUrl, width: 800, height: 800 },
+        ],
       },
       twitter: {
         card: "summary_large_image",

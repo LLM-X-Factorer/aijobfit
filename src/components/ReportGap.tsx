@@ -16,7 +16,7 @@ export default function ReportGap({ data }: { data: GapData }) {
   if (data.totalRequired === 0) return null;
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8">
+    <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8">
       <h2 className="text-2xl font-black text-slate-900 mb-2">第 4 节 · 技能 Gap 分析</h2>
       <p className="text-sm text-slate-500 mb-6">
         基于你最匹配的角色「{data.topRoleName}」的真实 JD 关键词频次。
