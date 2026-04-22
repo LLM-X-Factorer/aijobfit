@@ -14,7 +14,7 @@ export default function ReportFallbackNotice({
         <div className="text-2xl shrink-0 leading-none">⚠️</div>
         <div className="flex-1">
           <h3 className="text-base font-bold text-amber-900 mb-2">
-            下方 Top 3 匹配度均为 0%，这是诚实的计算结果
+            下方匹配度均为 0%，这是诚实的计算结果
           </h3>
           <div className="text-sm text-amber-900/80 space-y-2 leading-relaxed">
             <p>
@@ -26,16 +26,19 @@ export default function ReportFallbackNotice({
               这 <strong>不代表你不适合</strong> AI 岗位。大量非程序员转 AI 的关键第一步，就是先掌握 1–2 个 AI 工具技能。
             </p>
             {track && (
-              <p>
-                根据你选的目标方向「<strong>{track.id} · {track.name}</strong>」，
-                建议优先补齐这些技能：
-                <span className="font-semibold"> {track.keySkills.join(" / ")}</span>。
-                然后重新诊断，匹配度会显著提高。
-              </p>
+              <>
+                <p>
+                  根据你选的目标方向「<strong>{track.id} · {track.name}</strong>」，
+                  下方报告的 Top 1 角色、薪资区间、技能 Gap 都是围绕这个方向的典型角色展示的——
+                  匹配度显示 0% 是因为你还没掌握它的 required_skills，不是推荐偏差。
+                </p>
+                <p>
+                  建议优先补齐这些技能：
+                  <span className="font-semibold"> {track.keySkills.join(" / ")}</span>。
+                  然后重新诊断，匹配度会显著提高。
+                </p>
+              </>
             )}
-            <p className="pt-1">
-              下方报告仍然会展示 4 主线匹配度、薪资区间、基于目标方向的学习路径等内容，可以照常看。
-            </p>
           </div>
         </div>
       </div>

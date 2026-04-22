@@ -202,13 +202,12 @@ export function generateReport(
   reportId: string,
 ): Report {
   const allMatches = matchUserToRoles(input, roles, skills);
-  const topMatches = allMatches.slice(0, 3);
-  const top = topMatches[0];
   // calcTrackScores 走全量匹配，否则 top 3 若不含 track 对应角色，4 主线会全 0
   const trackScores = calcTrackScores(allMatches);
 
   // 兜底检测：top 1 为 0 说明用户技能与角色 required_skills 完全无交集
-  const isFallback = !top || top.matchScore === 0;
+  const rawTop = allMatches[0];
+  const isFallback = !rawTop || rawTop.matchScore === 0;
 
   // 兜底推荐方向：优先取用户选的 targetTrack 第一个（非"我不知道"），
   // 否则按 4 主线匹配度里第一个 > 0 的，再否则用默认 A。
@@ -220,6 +219,22 @@ export function generateReport(
       trackScores.filter((s) => s.score > 0).sort((a, b) => b.score - a.score)[0]?.track ||
       TRACKS[0]
     : null;
+
+  // Fallback 模式下把锚点角色（例如 B 主线 = operations）hoist 到 top，
+  // 避免后续 section 以字典序最靠前的 0% 角色（e.g. AI/LLM 工程师）为主角，
+  // 让运营用户看到的 Gap/薪资/Top 3 全部围绕错误角色。
+  let topMatches = allMatches.slice(0, 3);
+  if (isFallback && fallbackTrack) {
+    const anchorRoleId = fallbackTrack.roleIds.find((rid) => rid !== "other");
+    if (anchorRoleId) {
+      const anchor = allMatches.find((m) => m.roleId === anchorRoleId);
+      if (anchor) {
+        const rest = allMatches.filter((m) => m.roleId !== anchorRoleId);
+        topMatches = [anchor, ...rest.slice(0, 2)];
+      }
+    }
+  }
+  const top = topMatches[0];
 
   const topTrack = trackScores
     .filter((t) => t.score > 0)
