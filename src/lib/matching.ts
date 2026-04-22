@@ -121,6 +121,13 @@ export function matchUserToRoles(
           ? Math.min(100, (matchedWeight / totalWeight) * 100)
           : 0;
 
+      // 置信度惩罚：required + preferred 合计少于 5 个时，线性降权。
+      // 避免 "AI 教育" 这类稀疏角色（1 required + 0 preferred）用户命中一个就冲到
+      // 100%，把主线锚点角色（product_manager / operations）挤掉。
+      const skillCoverage = requiredIds.length + preferredIds.length;
+      const confidenceFactor = Math.min(1, skillCoverage / 5);
+      score *= confidenceFactor;
+
       // 加成：用户指定 targetTrack 且角色匹配
       if (targetRoleIds.has(role.role_id)) {
         score *= 1.2;
