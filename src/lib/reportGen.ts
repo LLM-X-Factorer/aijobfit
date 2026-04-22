@@ -57,6 +57,11 @@ export interface MetaData {
   rolesTotal: number;
   generatedAt: string;
   reportId: string;
+  // 兜底模式：用户技能与 agent-hunt 的技能库（偏 AI/ML 硬核）几乎不重合时触发，
+  // 匹配分数全为 0。报告内容照常渲染（用户看见的 top 3 都是 0%），
+  // 前端会在 Cover 上方显示一个提示，说明原因并建议下一步。
+  isFallback: boolean;
+  fallbackTrack?: Track | null;
 }
 
 export interface Report {
@@ -201,9 +206,24 @@ export function generateReport(
   const top = topMatches[0];
   // calcTrackScores 走全量匹配，否则 top 3 若不含 track 对应角色，4 主线会全 0
   const trackScores = calcTrackScores(allMatches);
+
+  // 兜底检测：top 1 为 0 说明用户技能与角色 required_skills 完全无交集
+  const isFallback = !top || top.matchScore === 0;
+
+  // 兜底推荐方向：优先取用户选的 targetTrack 第一个（非"我不知道"），
+  // 否则按 4 主线匹配度里第一个 > 0 的，再否则用默认 A。
+  const targetTrackFromInput = (input.targetTrack || [])
+    .map((t) => t[0])
+    .find((t) => ["A", "B", "C", "D"].includes(t));
+  const fallbackTrack = isFallback
+    ? TRACKS.find((t) => t.id === targetTrackFromInput) ||
+      trackScores.filter((s) => s.score > 0).sort((a, b) => b.score - a.score)[0]?.track ||
+      TRACKS[0]
+    : null;
+
   const topTrack = trackScores
     .filter((t) => t.score > 0)
-    .sort((a, b) => b.score - a.score)[0]?.track || null;
+    .sort((a, b) => b.score - a.score)[0]?.track || fallbackTrack || null;
   const generatedAt = new Date().toISOString().slice(0, 10);
 
   return {
@@ -235,6 +255,8 @@ export function generateReport(
       rolesTotal: 14,
       generatedAt,
       reportId,
+      isFallback,
+      fallbackTrack,
     },
   };
 }

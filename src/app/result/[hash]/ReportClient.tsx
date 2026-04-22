@@ -13,6 +13,7 @@ import ReportSalary from "@/components/ReportSalary";
 import ReportGap from "@/components/ReportGap";
 import ReportPaths from "@/components/ReportPaths";
 import ReportActions from "@/components/ReportActions";
+import ReportFallbackNotice from "@/components/ReportFallbackNotice";
 import SharePoster from "@/components/SharePoster";
 import LockedSections from "@/components/LockedSections";
 
@@ -136,6 +137,9 @@ export default function ReportClient({ hash }: { hash: string }) {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 fade-up">
+        {report.meta.isFallback && (
+          <ReportFallbackNotice track={report.meta.fallbackTrack} />
+        )}
         <ReportCover data={report.cover} />
         <ReportRoles data={report.roles} />
         <ReportSalary data={report.salary} />

@@ -37,6 +37,8 @@ function normalizeUserSkills(userSkills: string[], allSkills: Skill[]): Set<stri
     "数据分析": "data_analysis",
     chatgpt: "llm",
     claude: "llm",
+    cursor: "generative_ai",
+    runway: "generative_ai",
     "fine tuning": "fine_tuning",
     "fine-tuning": "fine_tuning",
     multimodal: "multimodal_ai",
