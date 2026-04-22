@@ -160,13 +160,12 @@ function buildGap(top: RoleMatch | undefined): GapData {
   }
   const totalRequired = top.role.required_skills.length;
   const matchedCount = top.matchedSkills.length;
-  // 优先级：count >= 10 → high；3-9 → mid；< 3 → low
+  // missingSkills 里都是 required_skills，默认至少 mid（"后补"），高频的升 high（"先补"）。
+  // 用绝对阈值 3 在低样本聚类（如 operations 95 JD，每 skill count=1）下会全掉到 low
+  // 并显示"锦上添花"，对 required 是误导。
   const missingSkills = top.missingSkills.map((s) => ({
     ...s,
-    priority: (s.importance >= 10 ? "high" : s.importance >= 3 ? "mid" : "low") as
-      | "high"
-      | "mid"
-      | "low",
+    priority: (s.importance >= 10 ? "high" : "mid") as "high" | "mid" | "low",
   }));
   return {
     topRoleName: top.roleName,
