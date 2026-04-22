@@ -5,46 +5,51 @@
 // 激活码 AIJOB-2026，客户端校验，localStorage 持久化。
 // 服务端 OG / SharePoster 走完整报告，不受此遮罩影响。
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import AssistantQR from "./AssistantQR";
 import { track } from "@/lib/track";
 
 const STORAGE_KEY = "aijobfit_unlocked";
 const CODE = "AIJOB-2026";
 
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getClientSnapshot(): boolean {
+  return localStorage.getItem(STORAGE_KEY) === "1";
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+function unlockAndNotify(): void {
+  localStorage.setItem(STORAGE_KEY, "1");
+  listeners.forEach((l) => l());
+}
+
 export default function LockedSections({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [unlocked, setUnlocked] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-    setUnlocked(localStorage.getItem(STORAGE_KEY) === "1");
-  }, []);
-
-  if (!hydrated) {
-    return (
-      <div className="h-[420px] rounded-2xl bg-slate-100 animate-pulse" />
-    );
-  }
+  const unlocked = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
 
   if (unlocked) {
     return <div className="unlocked space-y-6">{children}</div>;
   }
 
-  return (
-    <LockOverlay
-      onUnlock={() => {
-        localStorage.setItem(STORAGE_KEY, "1");
-        setUnlocked(true);
-      }}
-    >
-      {children}
-    </LockOverlay>
-  );
+  return <LockOverlay onUnlock={unlockAndNotify}>{children}</LockOverlay>;
 }
 
 function LockOverlay({

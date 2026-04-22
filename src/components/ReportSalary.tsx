@@ -6,7 +6,6 @@ export default function ReportSalary({ data }: { data: SalaryData }) {
   // 用一个简化的"水平刻度"图：P25 / P50 / P75，加上用户期望（如果有）
   const min = data.p25;
   const max = data.p75;
-  const range = max - min || 1;
   const userMid =
     data.userExpectedMin && data.userExpectedMax
       ? ((data.userExpectedMin + data.userExpectedMax) / 2) * 1000

@@ -98,7 +98,7 @@ export default function ReportPaths({ data }: { data: PathsData }) {
         )}
 
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
-          ⚠️ 自学风险：80% 自学者中途放弃；缺反馈循环、孤单。如果你属于"自己很难逼自己"那一类，可以看路径 B。
+          ⚠️ 自学风险：80% 自学者中途放弃；缺反馈循环、孤单。如果你属于「自己很难逼自己」那一类，可以看路径 B。
         </p>
       </div>
 

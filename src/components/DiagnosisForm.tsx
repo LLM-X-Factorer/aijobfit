@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FORM_FIELDS, STEP_TITLES, FormField } from "@/data/form-fields";
 import { encodeInput, UserInput } from "@/lib/encoding";
@@ -24,7 +24,10 @@ export default function DiagnosisForm() {
   });
   const [customSkill, setCustomSkill] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const startedAtRef = useRef<number>(Date.now());
+  const startedAtRef = useRef<number>(0);
+  useEffect(() => {
+    startedAtRef.current = Date.now();
+  }, []);
 
   const fieldsForStep = FORM_FIELDS.filter((f) => f.step === step);
 
@@ -97,6 +100,8 @@ export default function DiagnosisForm() {
       Array.isArray(v) ? v.length > 0 : v !== "" && v != null,
     ).length;
     track("form_submit", {
+      // Event handler scope; React 19 rule false-positive on impure calls here
+      // eslint-disable-next-line react-hooks/purity
       duration_ms: Date.now() - startedAtRef.current,
       filled_fields: filledCount,
       skills_count: (input.skills || []).length,
