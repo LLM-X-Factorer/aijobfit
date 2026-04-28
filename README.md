@@ -100,7 +100,7 @@ docs/
 
 public/
   data/                                agent-hunt v0.6 数据快照
-  qr-assistant.jpg                     小助理微信 QR
+  qr-assistant.png                     小助理微信 QR
   fonts/                               (空，生产可放 Noto Sans SC woff2)
 ```
 

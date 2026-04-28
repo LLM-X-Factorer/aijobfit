@@ -43,7 +43,7 @@ docker compose up -d --build # Docker (port 3004:3000)
 - `src/components/Report*.tsx` — 7 节报告组件（Cover / Roles / Salary / Gap / Paths / Actions + 第 7 节合并到 Actions）
 - `src/components/ReportFallbackNotice.tsx` — 0-match 兜底提示（黄色 banner，解释 required_skills 命中 0 的原因 + 推荐 target track keySkills）
 - `src/components/LockedSections.tsx` — 后 4 节软门槛。`useSyncExternalStore` 读 localStorage `aijobfit_unlocked`，激活码 `AIJOB-2026`（大小写不敏感，trimmed）
-- `src/components/AssistantQR.tsx` — 小助理微信 QR 组件，默认读 `public/qr-assistant.jpg`，env `NEXT_PUBLIC_ASSISTANT_QR_URL` 可覆盖
+- `src/components/AssistantQR.tsx` — 小助理微信 QR 组件，默认读 `public/qr-assistant.png`，env `NEXT_PUBLIC_ASSISTANT_QR_URL` 可覆盖
 - `src/components/DiagnosisForm.tsx` — 多步表单，含 form_submit 埋点
 - `src/components/SharePoster.tsx` — 1080×1920 竖版 Canvas 海报（client），QR 指向首页引流
 
@@ -89,7 +89,7 @@ docker compose up -d --build # Docker (port 3004:3000)
 - **微信生态**：方形 OG 800×800、WebView 复制链接降级、长按 QR 识别（#9 #5）
 - **漏斗埋点**：form_submit / report_view / mask_see / code_enter_{success,fail}（#10）
 - **算法修复**：calcTrackScores 走全量、稀疏角色置信度惩罚、fallback 锚点 hoist、Gap priority 基线（#11）
-- **真 QR 替换**：`public/qr-assistant.jpg`（467×452，2026-04-28），生产端到端浏览器测试已通（#12）
+- **真 QR 替换**：`public/qr-assistant.png`（500×450，2026-04-28），生产端到端浏览器测试已通（#12）
 - **CI**：GitHub Actions lint + tsc + build
 - **运营手册**：[`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md)
 
