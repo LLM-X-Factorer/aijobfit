@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FORM_FIELDS, STEP_TITLES, FormField } from "@/data/form-fields";
 import { encodeInput, UserInput } from "@/lib/encoding";
 import { track } from "@/lib/track";
+import TrackOverview from "@/components/TrackOverview";
 
 type FormState = Record<string, string | string[] | number>;
 
@@ -235,6 +236,17 @@ function FieldRender({
     return (
       <div>
         {label}
+        {field.id === "targetTrack" && (
+          <details className="mt-2 group">
+            <summary className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer select-none py-1 list-none flex items-center gap-1">
+              <span className="transition-transform group-open:rotate-90">▸</span>
+              <span className="hover:underline">4 条主线分别是什么？点开看关键技能、适合人群、JD 数量</span>
+            </summary>
+            <div className="mt-3 mb-1">
+              <TrackOverview />
+            </div>
+          </details>
+        )}
         <div className="flex flex-wrap gap-2 mt-2">
           {field.options?.map((opt) => {
             const on = selected.includes(opt);
