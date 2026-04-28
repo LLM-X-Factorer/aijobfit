@@ -4,6 +4,7 @@ import { Role, Skill } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { matchUserToRoles, RoleMatch } from "./matching";
 import { TRACKS, Track } from "@/data/tracks";
+import { AudienceType, audienceTypeFromYears } from "./audience";
 
 export interface CoverData {
   title: string;
@@ -48,6 +49,7 @@ export interface GapData {
 
 export interface PathsData {
   topTrack: Track | null;
+  audience: AudienceType;
 }
 
 export interface ActionsData {
@@ -183,6 +185,23 @@ function buildGap(top: RoleMatch | undefined): GapData {
 
 function buildActions(input: UserInput, topTrack: Track | null): ActionsData {
   const trackName = topTrack?.name || "你的目标主线";
+  const audience = audienceTypeFromYears(input.yearsExp);
+  if (audience === "fresh-grad") {
+    return {
+      d7: [
+        "用 Cursor / Claude Code 完成 1 个小自动化（写邮件脚本、整理课件、爬数据都行）",
+        "加入 1 个 AI 校招 / 实习社群（看准 / 牛客 / 即刻 AI Agent 玩家 / 任选）",
+      ],
+      d30: [
+        "完成 Datawhale 一期公益训练营（免费）",
+        "投出第一份 AI 实习 / 校招简历，跑 3-5 个真实面试拿反馈",
+      ],
+      d90: [
+        `1 段 AI 实习经验或 1 个能演示的 ${trackName} 项目，进入秋招 / 春招`,
+        "重新做一次本诊断报告，对比你的 Gap 缩小了多少",
+      ],
+    };
+  }
   return {
     d7: [
       "用 Cursor / Claude Code 完成你日常工作中的 1 个小自动化（哪怕只是写邮件脚本）",
@@ -275,7 +294,7 @@ export function generateReport(
     },
     salary: buildSalary(input, top),
     gap: buildGap(top),
-    paths: { topTrack },
+    paths: { topTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, topTrack),
     meta: {
       jdTotal: JD_TOTAL,
@@ -334,7 +353,7 @@ function generateRouteBReport(
     },
     salary: buildSalary(input, top),
     gap: buildGap(top),
-    paths: { topTrack: lockedTrack },
+    paths: { topTrack: lockedTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, lockedTrack),
     meta: {
       jdTotal: JD_TOTAL,

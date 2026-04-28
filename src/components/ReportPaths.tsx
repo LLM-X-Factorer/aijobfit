@@ -38,6 +38,7 @@ function ResourceItem({ r }: { r: Resource }) {
 export default function ReportPaths({ data }: { data: PathsData }) {
   const track = data.topTrack;
   const trackKey = track?.id || "A";
+  const isFreshGrad = data.audience === "fresh-grad";
 
   return (
     <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8">
@@ -49,10 +50,14 @@ export default function ReportPaths({ data }: { data: PathsData }) {
       {/* 路径 A：自学 */}
       <div className="border border-slate-200 rounded-xl p-4 sm:p-5 mb-4">
         <h3 className="text-lg font-bold text-slate-900 mb-1">
-          路径 A · 自学（免费 / 适合时间充裕 + 自驱力强）
+          {isFreshGrad
+            ? "路径 A · 自学（免费 / 应届校招前的黄金窗口）"
+            : "路径 A · 自学（免费 / 适合时间充裕 + 自驱力强）"}
         </h3>
         <p className="text-xs text-slate-500 mb-4">
-          每周 10h+ · 历史上完成过自学项目 · 经济敏感
+          {isFreshGrad
+            ? "在校时间充裕 · 不影响应届身份 · 适合做 portfolio 项目积累"
+            : "每周 10h+ · 历史上完成过自学项目 · 经济敏感"}
         </p>
 
         <div className="mb-4">
@@ -105,10 +110,14 @@ export default function ReportPaths({ data }: { data: PathsData }) {
       {/* 路径 B：3800 就业班 */}
       <div className="border border-blue-200 rounded-xl p-4 sm:p-5 mb-4 bg-blue-50/30">
         <h3 className="text-lg font-bold text-slate-900 mb-1">
-          路径 B · 3800 就业班（适合需要节奏感 + 教练 + 同伴）
+          {isFreshGrad
+            ? "路径 B · 3800 就业班（应届秋招 / 春招冲刺最佳节奏）"
+            : "路径 B · 3800 就业班（适合需要节奏感 + 教练 + 同伴）"}
         </h3>
         <p className="text-xs text-slate-500 mb-3">
-          12 周陪跑 · 同班分流 · 每月开 1 期 · 不打饥饿营销
+          {isFreshGrad
+            ? "12 周陪跑刚好衔接秋招 / 春招 · 同班分流 · 不打饥饿营销"
+            : "12 周陪跑 · 同班分流 · 每月开 1 期 · 不打饥饿营销"}
         </p>
 
         <div className="text-sm text-slate-700 space-y-1.5 mb-3">
