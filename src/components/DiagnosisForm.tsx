@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FORM_FIELDS, STEP_TITLES } from "@/data/form-fields";
-import { encodeInput, UserInput } from "@/lib/encoding";
+import { decodeInput, encodeInput, UserInput } from "@/lib/encoding";
 import { track } from "@/lib/track";
 import { FormFieldRender } from "@/components/FormFieldRender";
 
@@ -15,14 +15,38 @@ function isEmpty(v: unknown): boolean {
   return false;
 }
 
+function buildInitialState(fromHash: string | null): FormState {
+  const base: FormState = { skills: [], targetTrack: [], industry: [] };
+  if (!fromHash) return base;
+  try {
+    const prev = decodeInput(fromHash);
+    return {
+      ...base,
+      currentJob: prev.currentJob || "",
+      yearsExp: prev.yearsExp || "",
+      education: prev.education || "",
+      city: prev.city || "",
+      skills: prev.skills || [],
+      targetTrack: prev.targetTrack || [],
+      industry: prev.industry || [],
+      motivation: prev.motivation || "",
+      timeBudget: prev.timeBudget || "",
+      expectedSalary:
+        prev.expectedSalaryMin && prev.expectedSalaryMax
+          ? `${prev.expectedSalaryMin}-${prev.expectedSalaryMax}`
+          : "",
+    };
+  } catch {
+    return base;
+  }
+}
+
 export default function DiagnosisForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromHash = searchParams.get("from");
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [state, setState] = useState<FormState>({
-    skills: [],
-    targetTrack: [],
-    industry: [],
-  });
+  const [state, setState] = useState<FormState>(() => buildInitialState(fromHash));
   const [customSkill, setCustomSkill] = useState("");
   const [error, setError] = useState<string | null>(null);
   const startedAtRef = useRef<number>(0);

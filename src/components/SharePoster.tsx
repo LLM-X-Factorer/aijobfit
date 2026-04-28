@@ -127,14 +127,20 @@ async function drawPoster(report: Report): Promise<string> {
   const top = cover.topRoles[0];
   const topRoleName = top?.roleName || "—";
   const topScore = top?.matchScore ?? 0;
+  const isRouteB = cover.route === "B";
+  const cardLabel = isRouteB ? "锁定目标 · 匹配度" : "Top 1 角色匹配";
+  const displayRoleName =
+    isRouteB && cover.lockedTarget?.industry
+      ? `${cover.lockedTarget.industry} · ${topRoleName}`
+      : topRoleName;
 
   ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.font = "400 26px system-ui, -apple-system, sans-serif";
-  ctx.fillText("Top 1 角色匹配", PAD + 40, y + 60);
+  ctx.fillText(cardLabel, PAD + 40, y + 60);
 
   ctx.fillStyle = "#FFFFFF";
   ctx.font = "700 72px system-ui, -apple-system, sans-serif";
-  ctx.fillText(topRoleName, PAD + 40, y + 150);
+  ctx.fillText(displayRoleName, PAD + 40, y + 150);
 
   // 匹配度 pill
   ctx.font = "700 40px system-ui, -apple-system, sans-serif";
@@ -211,47 +217,49 @@ async function drawPoster(report: Report): Promise<string> {
     ctx.fillText("暂无足够数据", PAD, y + 40);
   }
 
-  // ===== 4 主线匹配条 =====
+  // ===== 4 主线匹配条（路线 A）/ 单角色已展示在大卡（路线 B 时跳过本节）=====
   y += 160;
-  ctx.fillStyle = TEXT_MUTED;
-  ctx.font = "400 26px system-ui, -apple-system, sans-serif";
-  ctx.fillText("4 主线匹配度", PAD, y);
-  y += 36;
-
-  const barAreaW = POSTER_W - PAD * 2;
-  const rowH = 64;
-  const barH = 14;
-  const sortedTracks = [...cover.trackScores].sort(
-    (a, b) => b.score - a.score,
-  );
-  sortedTracks.forEach((t, i) => {
-    const rowY = y + i * rowH;
-    ctx.fillStyle = TEXT_DARK;
-    ctx.font = "500 26px system-ui, -apple-system, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText(`${t.track.id} · ${t.track.name}`, PAD, rowY + 10);
-
+  if (!isRouteB && cover.trackScores.length > 0) {
     ctx.fillStyle = TEXT_MUTED;
-    ctx.font = "500 24px system-ui, -apple-system, sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText(`${Math.round(t.score)}%`, POSTER_W - PAD, rowY + 10);
+    ctx.font = "400 26px system-ui, -apple-system, sans-serif";
+    ctx.fillText("4 主线匹配度", PAD, y);
+    y += 36;
 
-    // bar track
-    const barY = rowY + 24;
-    ctx.fillStyle = "#E2E8F0";
-    roundRect(ctx, PAD, barY, barAreaW, barH, barH / 2);
-    ctx.fill();
-    // bar fill
-    const fillW = Math.max(0, Math.min(1, t.score / 100)) * barAreaW;
-    if (fillW > 0) {
-      ctx.fillStyle = BRAND;
-      roundRect(ctx, PAD, barY, fillW, barH, barH / 2);
+    const barAreaW = POSTER_W - PAD * 2;
+    const rowH = 64;
+    const barH = 14;
+    const sortedTracks = [...cover.trackScores].sort(
+      (a, b) => b.score - a.score,
+    );
+    sortedTracks.forEach((t, i) => {
+      const rowY = y + i * rowH;
+      ctx.fillStyle = TEXT_DARK;
+      ctx.font = "500 26px system-ui, -apple-system, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`${t.track.id} · ${t.track.name}`, PAD, rowY + 10);
+
+      ctx.fillStyle = TEXT_MUTED;
+      ctx.font = "500 24px system-ui, -apple-system, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`${Math.round(t.score)}%`, POSTER_W - PAD, rowY + 10);
+
+      // bar track
+      const barY = rowY + 24;
+      ctx.fillStyle = "#E2E8F0";
+      roundRect(ctx, PAD, barY, barAreaW, barH, barH / 2);
       ctx.fill();
-    }
-  });
-  ctx.textAlign = "left";
+      // bar fill
+      const fillW = Math.max(0, Math.min(1, t.score / 100)) * barAreaW;
+      if (fillW > 0) {
+        ctx.fillStyle = BRAND;
+        roundRect(ctx, PAD, barY, fillW, barH, barH / 2);
+        ctx.fill();
+      }
+    });
+    ctx.textAlign = "left";
 
-  y += sortedTracks.length * rowH + 20;
+    y += sortedTracks.length * rowH + 20;
+  }
 
   // ===== 分割线 =====
   y += 20;
