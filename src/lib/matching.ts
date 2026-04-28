@@ -132,6 +132,7 @@ export function matchUserToRoles(
   input: UserInput,
   roles: Role[],
   allSkills: Skill[],
+  options: { lockedRoleId?: string } = {},
 ): RoleMatch[] {
   const userSkillIds = normalizeUserSkills(input.skills, allSkills);
   const userEduLevel = educationLevel[input.education] ?? 2;
@@ -155,8 +156,10 @@ export function matchUserToRoles(
     .filter((v): v is string => Boolean(v));
 
   const matches: RoleMatch[] = roles
-    // 排除 "其他"（other）这种聚合桶，避免推非典型角色
-    .filter((r) => r.role_id !== "other")
+    // 路线 B：仅算用户锁定的角色；路线 A：排除 "其他" 聚合桶
+    .filter((r) =>
+      options.lockedRoleId ? r.role_id === options.lockedRoleId : r.role_id !== "other",
+    )
     .map((role) => {
       const requiredIds = role.required_skills.map((s) => s.skill_id);
       const preferredIds = role.preferred_skills.map((s) => s.skill_id);
