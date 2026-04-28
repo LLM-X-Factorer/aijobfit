@@ -97,6 +97,13 @@ src/
 
 docs/
   产品手册-运营版.md                    运营科普手册（FAQ / 话术模板 / 漏斗说明）
+  用户流程-图文版.md                    14 截图图文版用户流程走查（业务方/运营 onboarding 用）
+  screenshots/                         移动端 375px 用户流程截图
+  pdf/                                 上面两份 md 的 PDF 构建产物（直接发给业务方）
+
+scripts/
+  build-docs-pdf.sh                    md → PDF 构建脚本（pandoc + Chrome headless）
+  docs-pdf.css                         PDF 输出样式
 
 public/
   data/                                agent-hunt v0.6 数据快照
@@ -108,9 +115,13 @@ public/
 
 `src/lib/fetchAgentHunt.ts` 客户端先尝试 `https://agent-hunt.pages.dev/data/*.json`，失败 fallback 到 `public/data/` 本地快照。agent-hunt 发新版本后自动切远程，无需 aijobfit 侧改代码（见 [agent-hunt#7](https://github.com/LLM-X-Factorer/agent-hunt/issues/7)）。
 
-## 运营同学请看
+## 运营 / 业务请看
 
-👉 [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) 包含产品 pitch、用户漏斗、加好友话术模板、FAQ 7 条、激活码机制说明。
+两份配套：
+- 👉 [`docs/用户流程-图文版.md`](./docs/用户流程-图文版.md) — 14 张移动端截图图文走查，看用户屏幕上发生了什么（[PDF](./docs/pdf/用户流程-图文版.pdf)）
+- 👉 [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) — 加好友后的话术模板 / FAQ / 异常处理（[PDF](./docs/pdf/产品手册-运营版.pdf)）
+
+PDF 是 md 改动后跑 `./scripts/build-docs-pdf.sh` 重新生成的（依赖 macOS pandoc + Chrome）。
 
 ## License
 

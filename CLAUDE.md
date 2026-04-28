@@ -90,8 +90,13 @@ docker compose up -d --build # Docker (port 3004:3000)
 - **漏斗埋点**：form_submit / report_view / mask_see / code_enter_{success,fail}（#10）
 - **算法修复**：calcTrackScores 走全量、稀疏角色置信度惩罚、fallback 锚点 hoist、Gap priority 基线（#11）
 - **真 QR 替换**：`public/qr-assistant.png`（500×450，2026-04-28），生产端到端浏览器测试已通（#12）
+- **移动端 UI polish**：报告封面 `currentJob` wrap、Gap 行 mobile 堆叠（`flex-col sm:flex-row`）、QR size 150→180（rendered 130→160）、blur 容器 420→480
 - **CI**：GitHub Actions lint + tsc + build
-- **运营手册**：[`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md)
+- **运营 / 业务文档**：
+  - [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) — 话术 / FAQ / 异常处理
+  - [`docs/用户流程-图文版.md`](./docs/用户流程-图文版.md) — 14 张移动端截图图文走查（业务 onboarding）
+  - [`docs/pdf/`](./docs/pdf/) — 两份 md 的 PDF 构建产物（直接发给业务方）
+  - `scripts/build-docs-pdf.sh` — md → PDF 一键重建（pandoc + Chrome headless）
 
 ## 剩余 open issue（非代码）
 
