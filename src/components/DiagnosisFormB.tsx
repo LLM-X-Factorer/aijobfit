@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FORM_FIELDS } from "@/data/form-fields";
-import { encodeInput, UserInput } from "@/lib/encoding";
+import { decodeInput, encodeInput, UserInput } from "@/lib/encoding";
 import { track } from "@/lib/track";
 import { fetchRoles, Role } from "@/lib/fetchAgentHunt";
 import { FormFieldRender } from "@/components/FormFieldRender";
@@ -22,14 +22,37 @@ const STEP_TITLES_B: Record<1 | 2 | 3, string> = {
 const STEP_2_FIELD_IDS = ["yearsExp", "education", "currentJob", "city", "skills"];
 const STEP_3_FIELD_IDS = ["motivation", "expectedSalary", "timeBudget"];
 
+function buildInitialState(fromHash: string | null): FormState {
+  const base: FormState = { skills: [], targetIndustry: "", targetRoleId: "" };
+  if (!fromHash) return base;
+  try {
+    const prev = decodeInput(fromHash);
+    return {
+      ...base,
+      currentJob: prev.currentJob || "",
+      yearsExp: prev.yearsExp || "",
+      education: prev.education || "",
+      city: prev.city || "",
+      skills: prev.skills || [],
+      motivation: prev.motivation || "",
+      timeBudget: prev.timeBudget || "",
+      targetIndustry: (prev.industry && prev.industry[0]) || "",
+      expectedSalary:
+        prev.expectedSalaryMin && prev.expectedSalaryMax
+          ? `${prev.expectedSalaryMin}-${prev.expectedSalaryMax}`
+          : "",
+    };
+  } catch {
+    return base;
+  }
+}
+
 export default function DiagnosisFormB() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromHash = searchParams.get("from");
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [state, setState] = useState<FormState>({
-    skills: [],
-    targetIndustry: "",
-    targetRoleId: "",
-  });
+  const [state, setState] = useState<FormState>(() => buildInitialState(fromHash));
   const [customSkill, setCustomSkill] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);

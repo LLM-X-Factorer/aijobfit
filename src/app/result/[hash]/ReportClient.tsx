@@ -148,6 +148,25 @@ export default function ReportClient({ hash }: { hash: string }) {
           <ReportPaths data={report.paths} />
           <ReportActions actions={report.actions} meta={report.meta} />
         </LockedSections>
+        {report.meta.route === "A" && (
+          <section className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">
+              这 3 个推荐都不是你想要的？
+            </h3>
+            <p className="text-sm text-slate-600 mb-5 max-w-xl mx-auto leading-relaxed">
+              换个方式：你自己锁定行业 + 岗位，我们围绕你的目标算匹配率 + Gap，不再给推荐。已填字段会自动带过去，不用重填。
+            </p>
+            <Link
+              href={`/diagnose-target?from=${encodeURIComponent(hash)}`}
+              onClick={() =>
+                track("report_reject_top3_click", { report_id: report.meta.reportId })
+              }
+              className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
+            >
+              切到目标 Gap 诊断 →
+            </Link>
+          </section>
+        )}
       </div>
 
       <footer className="border-t border-slate-200 px-4 py-6 text-center text-xs text-slate-500 bg-white">
