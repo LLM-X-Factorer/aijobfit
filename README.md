@@ -78,7 +78,7 @@ src/
     Report*.tsx                        7 节报告组件
     ReportFallbackNotice.tsx           0-match 兜底提示
     LockedSections.tsx                 后 4 节软门槛 + 激活码
-    AssistantQR.tsx                    小助理 QR（占位可换）
+    AssistantQR.tsx                    小助理微信 QR 组件
     DiagnosisForm.tsx                  多步表单
     SharePoster.tsx                    1080×1920 海报
   lib/

@@ -89,13 +89,13 @@ docker compose up -d --build # Docker (port 3004:3000)
 - **微信生态**：方形 OG 800×800、WebView 复制链接降级、长按 QR 识别（#9 #5）
 - **漏斗埋点**：form_submit / report_view / mask_see / code_enter_{success,fail}（#10）
 - **算法修复**：calcTrackScores 走全量、稀疏角色置信度惩罚、fallback 锚点 hoist、Gap priority 基线（#11）
+- **真 QR 替换**：`public/qr-assistant.jpg`（467×452，2026-04-28），生产端到端浏览器测试已通（#12）
 - **CI**：GitHub Actions lint + tsc + build
 - **运营手册**：[`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md)
 
 ## 剩余 open issue（非代码）
 
-- **#12**：部署 · 替换占位小助理 QR 为真实图
-- **#13**：测试 · 微信实机全链路
+- **#13**：测试 · 微信实机全链路（手机微信扫 QR → 加好友 → 拿激活码，不在代码里）
 - **#14**：数据 · 漏斗埋点观察期 + 门槛调优决策
 
 已关闭：#1 付费墙、#2 PDF（pivot 废弃）| #3 agent-hunt refetch（aijobfit 侧完工，跨仓 todo 迁移至 agent-hunt#7）| #4 部署（已上线）| #5-#11 见上文
