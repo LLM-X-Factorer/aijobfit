@@ -4,6 +4,24 @@ import { Role, Skill } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { TRACKS } from "@/data/tracks";
 
+export interface WhyMatched {
+  hitRequired: string[]; // canonical names of required skills hit
+  hitPreferred: string[]; // canonical names of preferred skills hit
+  totalRequired: number;
+  totalPreferred: number;
+  targetTrackBoost: { trackId: string; trackName: string } | null;
+  educationPenalty: { advancedPct: number; userEdu: string } | null;
+  lowConfidence: { skillCoverage: number } | null;
+  industryFit: {
+    userIndustriesCN: string[];
+    roleTopIndustriesCN: string[];
+    intersect: string[];
+    match: boolean;
+  } | null;
+  zeroHit: boolean;
+  reasoning: string[];
+}
+
 export interface RoleMatch {
   roleId: string;
   roleName: string;
@@ -11,7 +29,33 @@ export interface RoleMatch {
   matchedSkills: string[]; // canonical names
   missingSkills: { name: string; importance: number }[]; // missing required + preferred, sorted by count
   role: Role;
+  whyMatched: WhyMatched;
 }
+
+// 表单 industry 选项（中文）↔ roles-domestic.json top_industries（英文）双向映射
+const INDUSTRY_CN_TO_EN: Record<string, string> = {
+  互联网: "internet",
+  金融: "finance",
+  医疗: "healthcare",
+  制造: "manufacturing",
+  零售: "retail",
+  教育: "education",
+};
+
+const INDUSTRY_EN_TO_CN: Record<string, string> = {
+  internet: "互联网",
+  finance: "金融",
+  healthcare: "医疗",
+  manufacturing: "制造",
+  retail: "零售",
+  education: "教育",
+  automotive: "汽车",
+  consulting: "咨询",
+  energy: "能源",
+  government: "政府",
+  media: "媒体",
+  other: "其他",
+};
 
 // 预先构建一个 alias map：把用户输入的常见技能名映射到 skill_id
 // 简化版：同时支持 canonical name 完整匹配 + id 完整匹配 + 子串包含
@@ -69,12 +113,12 @@ function getSkillName(skillId: string, allSkills: Skill[]): string {
   return sk ? sk.canonical_name : skillId;
 }
 
-// 教育要求估算：如果角色 education 字段中 master + phd > 50%，认为要求"高学历"
-function roleRequiresAdvancedDegree(role: Role): boolean {
+// 角色 JD 中 master+phd 的占比；> 50% 视为"高学历要求"
+function roleAdvancedDegreePct(role: Role): number {
   const total = Object.values(role.education).reduce((a, b) => a + b, 0);
-  if (total === 0) return false;
+  if (total === 0) return 0;
   const advanced = (role.education.master || 0) + (role.education.phd || 0);
-  return advanced / total > 0.5;
+  return advanced / total;
 }
 
 const educationLevel: Record<string, number> = {
@@ -103,6 +147,13 @@ export function matchUserToRoles(
     if (track) track.roleIds.forEach((r) => targetRoleIds.add(r));
   }
 
+  const userIndustriesCN = (input.industry || []).filter(
+    (i) => i && i !== "其他" && i.trim(),
+  );
+  const userIndustriesEN = userIndustriesCN
+    .map((cn) => INDUSTRY_CN_TO_EN[cn])
+    .filter((v): v is string => Boolean(v));
+
   const matches: RoleMatch[] = roles
     // 排除 "其他"（other）这种聚合桶，避免推非典型角色
     .filter((r) => r.role_id !== "other")
@@ -126,23 +177,26 @@ export function matchUserToRoles(
       // 100%，把主线锚点角色（product_manager / operations）挤掉。
       const skillCoverage = requiredIds.length + preferredIds.length;
       const confidenceFactor = Math.min(1, skillCoverage / 5);
+      const isLowConfidence = skillCoverage < 5;
       score *= confidenceFactor;
 
       // 加成：用户指定 targetTrack 且角色匹配
-      if (targetRoleIds.has(role.role_id)) {
-        score *= 1.2;
-      }
+      const triggeringTrack = TRACKS.find(
+        (t) => targetTrackIds.includes(t.id) && t.roleIds.includes(role.role_id),
+      );
+      const isTargetTrackBoosted = Boolean(triggeringTrack);
+      if (isTargetTrackBoosted) score *= 1.2;
 
       // 惩罚：高学历要求但用户低学历
-      if (roleRequiresAdvancedDegree(role) && userEduLevel < 3) {
-        score *= 0.5;
-      }
+      const advancedPct = roleAdvancedDegreePct(role);
+      const isEducationPenalized = advancedPct > 0.5 && userEduLevel < 3;
+      if (isEducationPenalized) score *= 0.5;
 
       score = Math.min(100, Math.round(score));
 
-      const matchedSkills = [...matchedRequired, ...matchedPreferred].map((id) =>
-        getSkillName(id, allSkills),
-      );
+      const hitRequiredNames = matchedRequired.map((id) => getSkillName(id, allSkills));
+      const hitPreferredNames = matchedPreferred.map((id) => getSkillName(id, allSkills));
+      const matchedSkills = [...hitRequiredNames, ...hitPreferredNames];
 
       const missingRequired = role.required_skills
         .filter((s) => !userSkillIds.has(s.skill_id))
@@ -151,6 +205,101 @@ export function matchUserToRoles(
       // 按 count（即出现频次/重要性）降序
       missingRequired.sort((a, b) => b.importance - a.importance);
 
+      // 行业匹配：把用户中文行业映射成英文 keyword 后与 role.top_industries 求交集
+      const roleTopIndustriesEN = (role.top_industries || []).slice(0, 5).map((t) => t.industry);
+      const intersectEN = userIndustriesEN.filter((en) => roleTopIndustriesEN.includes(en));
+      const industryFit =
+        userIndustriesCN.length > 0 && roleTopIndustriesEN.length > 0
+          ? {
+              userIndustriesCN,
+              roleTopIndustriesCN: roleTopIndustriesEN.map(
+                (en) => INDUSTRY_EN_TO_CN[en] ?? en,
+              ),
+              intersect: intersectEN.map((en) => INDUSTRY_EN_TO_CN[en] ?? en),
+              match: intersectEN.length > 0,
+            }
+          : null;
+
+      const zeroHit = matchedRequired.length === 0 && matchedPreferred.length === 0;
+
+      const reasoning: string[] = [];
+      if (zeroHit) {
+        reasoning.push(
+          `0 项命中：你填的技能与「${role.role_name}」的 ${requiredIds.length} 项必备 / ${preferredIds.length} 项优选都没交集。出现在 Top 3 不是因为技能匹配，优先看下方 Gap 节列出的待补技能。`,
+        );
+      } else {
+        const segs: string[] = [];
+        if (hitRequiredNames.length > 0) {
+          const sample = hitRequiredNames.slice(0, 5).join("、");
+          const more = hitRequiredNames.length > 5 ? "…" : "";
+          segs.push(
+            `必备技能命中 ${hitRequiredNames.length}/${requiredIds.length}（${sample}${more}）`,
+          );
+        }
+        if (hitPreferredNames.length > 0) {
+          const sample = hitPreferredNames.slice(0, 5).join("、");
+          const more = hitPreferredNames.length > 5 ? "…" : "";
+          segs.push(
+            `优选技能命中 ${hitPreferredNames.length}/${preferredIds.length}（${sample}${more}）`,
+          );
+        }
+        reasoning.push(`你的技能与该角色硬要求重合：${segs.join("；")}。`);
+      }
+
+      if (isTargetTrackBoosted && triggeringTrack) {
+        reasoning.push(
+          `你选了「${triggeringTrack.name}」主线 → 该角色得分 ×1.2 加权，提升了在你 Top 3 里的排序。`,
+        );
+      }
+
+      if (isEducationPenalized) {
+        reasoning.push(
+          `该角色 ${Math.round(advancedPct * 100)}% JD 要求硕士及以上，你目前 ${input.education} → 匹配分 ×0.5 折半，不是首选。`,
+        );
+      }
+
+      if (isLowConfidence) {
+        reasoning.push(
+          `聚类样本稀（required + preferred 仅 ${skillCoverage} 项）→ 统计稳定性低，分数仅供参考。`,
+        );
+      }
+
+      if (industryFit) {
+        if (industryFit.match) {
+          reasoning.push(
+            `行业匹配：你的目标行业「${industryFit.intersect.join("、")}」出现在该角色 Top 行业里。`,
+          );
+        } else {
+          reasoning.push(
+            `行业偏移：你的目标行业「${industryFit.userIndustriesCN.join("、")}」不在该角色 Top 行业（${industryFit.roleTopIndustriesCN.slice(0, 3).join(" / ")}）→ 跨行可能需要适配。`,
+          );
+        }
+      }
+
+      if (zeroHit) {
+        reasoning.push(
+          `建议：先去补 Gap 节列的必备技能，或在路线 B 自己锁定行业 + 岗位重新诊断。`,
+        );
+      }
+
+      const whyMatched: WhyMatched = {
+        hitRequired: hitRequiredNames,
+        hitPreferred: hitPreferredNames,
+        totalRequired: requiredIds.length,
+        totalPreferred: preferredIds.length,
+        targetTrackBoost:
+          isTargetTrackBoosted && triggeringTrack
+            ? { trackId: triggeringTrack.id, trackName: triggeringTrack.name }
+            : null,
+        educationPenalty: isEducationPenalized
+          ? { advancedPct, userEdu: input.education }
+          : null,
+        lowConfidence: isLowConfidence ? { skillCoverage } : null,
+        industryFit,
+        zeroHit,
+        reasoning,
+      };
+
       return {
         roleId: role.role_id,
         roleName: role.role_name,
@@ -158,6 +307,7 @@ export function matchUserToRoles(
         matchedSkills,
         missingSkills: missingRequired.slice(0, 8),
         role,
+        whyMatched,
       };
     });
 

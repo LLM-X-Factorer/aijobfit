@@ -61,6 +61,28 @@ export default function ReportRoles({ data }: { data: RolesData }) {
               </div>
             )}
 
+            <div
+              className={`mt-3 rounded-lg border p-3 text-sm ${
+                m.whyMatched.zeroHit
+                  ? "border-rose-200 bg-rose-50/50"
+                  : m.whyMatched.educationPenalty ||
+                      m.whyMatched.lowConfidence ||
+                      (m.whyMatched.industryFit && !m.whyMatched.industryFit.match)
+                    ? "border-amber-200 bg-amber-50/50"
+                    : "border-slate-200 bg-slate-50/60"
+              }`}
+            >
+              <p className="text-xs font-bold text-slate-700 mb-1.5">为什么是你？</p>
+              <ul className="space-y-1 text-slate-700 leading-relaxed">
+                {m.whyMatched.reasoning.map((line, i) => (
+                  <li key={i} className="flex gap-1.5">
+                    <span className="text-slate-400">·</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             {m.role.top_industries && m.role.top_industries.length > 0 && (
               <p className="text-xs text-slate-500 mt-2">
                 Top 行业：
