@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import DiagnosisFormB from "@/components/DiagnosisFormB";
 
 export default function DiagnoseTargetPage() {
@@ -18,7 +19,15 @@ export default function DiagnoseTargetPage() {
           已经有目标岗位 + 行业？选好后，我们围绕这个目标算匹配率 + 缺什么。
         </p>
       </div>
-      <DiagnosisFormB />
+      <Suspense
+        fallback={
+          <div className="max-w-2xl mx-auto text-center text-sm text-slate-500 py-12">
+            正在加载表单…
+          </div>
+        }
+      >
+        <DiagnosisFormB />
+      </Suspense>
     </main>
   );
 }
