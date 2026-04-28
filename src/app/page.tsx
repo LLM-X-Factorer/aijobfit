@@ -46,15 +46,29 @@ export default function Home() {
           运营 / 设计 / HR / 营销 / 咨询 / 传统行业转 AI · 不卖课不催单
         </p>
 
-        <Link
-          href="/diagnose"
-          className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
-        >
-          免费做一次诊断 →
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+          <Link
+            href="/diagnose"
+            className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
+          >
+            帮我定位 →
+          </Link>
+          <Link
+            href="/diagnose-target"
+            className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full transition-all"
+          >
+            我有目标，诊断匹配度 →
+          </Link>
+        </div>
         <p className="text-xs text-slate-400 mt-3">
           永久免费 · 无需注册 · 10 分钟出报告
         </p>
+        <div className="mt-4 max-w-xl text-xs text-slate-500 leading-relaxed">
+          <p>
+            <span className="font-bold text-blue-700">路线 A 帮我定位</span>：基于你的技能和背景推荐 Top 3 角色 ·{" "}
+            <span className="font-bold text-blue-700">路线 B 目标 Gap 诊断</span>：你锁定行业 + 岗位，算匹配率 + Gap
+          </p>
+        </div>
 
         {/* 数据锚点 */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-2xl w-full">

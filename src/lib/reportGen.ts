@@ -11,16 +11,20 @@ export interface CoverData {
   yearsExp: string;
   education: string;
   city?: string;
-  trackScores: { track: Track; score: number }[]; // 4 主线匹配度
+  trackScores: { track: Track; score: number }[]; // 4 主线匹配度（路线 B 时为空）
   topRoles: { roleName: string; matchScore: number }[];
   reportId: string;
   generatedAt: string;
+  route: "A" | "B";
+  // 路线 B：用户锁定的目标
+  lockedTarget?: { industry?: string; roleName: string };
 }
 
 export interface RolesData {
   topMatches: RoleMatch[];
   totalRoles: number;
   totalJDs: number;
+  route: "A" | "B";
 }
 
 export interface SalaryData {
@@ -62,6 +66,7 @@ export interface MetaData {
   // 前端会在 Cover 上方显示一个提示，说明原因并建议下一步。
   isFallback: boolean;
   fallbackTrack?: Track | null;
+  route: "A" | "B";
 }
 
 export interface Report {
@@ -200,6 +205,12 @@ export function generateReport(
   skills: Skill[],
   reportId: string,
 ): Report {
+  const route: "A" | "B" = input.route === "B" ? "B" : "A";
+
+  if (route === "B") {
+    return generateRouteBReport(input, roles, skills, reportId);
+  }
+
   const allMatches = matchUserToRoles(input, roles, skills);
   // calcTrackScores 走全量匹配，否则 top 3 若不含 track 对应角色，4 主线会全 0
   const trackScores = calcTrackScores(allMatches);
@@ -254,11 +265,13 @@ export function generateReport(
       })),
       reportId,
       generatedAt,
+      route: "A",
     },
     roles: {
       topMatches,
       totalRoles: 14,
       totalJDs: JD_TOTAL,
+      route: "A",
     },
     salary: buildSalary(input, top),
     gap: buildGap(top),
@@ -271,6 +284,66 @@ export function generateReport(
       reportId,
       isFallback,
       fallbackTrack,
+      route: "A",
+    },
+  };
+}
+
+// 路线 B：用户锁定行业 + 岗位，仅诊断该锁定角色的匹配率
+function generateRouteBReport(
+  input: UserInput,
+  roles: Role[],
+  skills: Skill[],
+  reportId: string,
+): Report {
+  const lockedRoleId = input.targetRoleId || "";
+  const matches = matchUserToRoles(input, roles, skills, { lockedRoleId });
+  const top = matches[0];
+  const lockedTrack = TRACKS.find((t) => t.roleIds.includes(lockedRoleId)) || null;
+  const generatedAt = new Date().toISOString().slice(0, 10);
+  const lockedIndustry = (input.industry || []).find((i) => i && i !== "其他");
+
+  // 路线 B 不做兜底锚点切换 — 用户已锁，不替换。0 命中由 whyMatched 诚实告知。
+  const isFallback = false;
+
+  return {
+    cover: {
+      title: top
+        ? `你能不能上「${lockedIndustry ? lockedIndustry + " · " : ""}${top.roleName}」`
+        : "AI 求职目标 Gap 诊断",
+      currentJob: input.currentJob,
+      yearsExp: input.yearsExp,
+      education: input.education,
+      city: input.city,
+      trackScores: [],
+      topRoles: top
+        ? [{ roleName: top.roleName, matchScore: top.matchScore }]
+        : [],
+      reportId,
+      generatedAt,
+      route: "B",
+      lockedTarget: top
+        ? { industry: lockedIndustry, roleName: top.roleName }
+        : undefined,
+    },
+    roles: {
+      topMatches: matches,
+      totalRoles: 14,
+      totalJDs: JD_TOTAL,
+      route: "B",
+    },
+    salary: buildSalary(input, top),
+    gap: buildGap(top),
+    paths: { topTrack: lockedTrack },
+    actions: buildActions(input, lockedTrack),
+    meta: {
+      jdTotal: JD_TOTAL,
+      rolesTotal: 14,
+      generatedAt,
+      reportId,
+      isFallback,
+      fallbackTrack: null,
+      route: "B",
     },
   };
 }
