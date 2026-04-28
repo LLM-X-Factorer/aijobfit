@@ -167,6 +167,36 @@ export default function ReportClient({ hash }: { hash: string }) {
             </Link>
           </section>
         )}
+        {report.meta.route === "B" && (
+          <section className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">
+              觉得这个目标不太对？
+            </h3>
+            <p className="text-sm text-slate-600 mb-5 max-w-xl mx-auto leading-relaxed">
+              你可以换个目标重新诊断，或者让系统基于你的技能推荐 Top 3 角色。已填字段都会带过去。
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center">
+              <Link
+                href={`/diagnose-target?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_b_reselect_target_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
+              >
+                重选目标 →
+              </Link>
+              <Link
+                href={`/diagnose?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_b_switch_to_a_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold px-6 py-3 rounded-full transition-all"
+              >
+                让系统推荐 Top 3 →
+              </Link>
+            </div>
+          </section>
+        )}
       </div>
 
       <footer className="border-t border-slate-200 px-4 py-6 text-center text-xs text-slate-500 bg-white">

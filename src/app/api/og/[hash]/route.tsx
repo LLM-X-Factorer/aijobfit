@@ -37,8 +37,13 @@ export async function GET(
     const report = generateReport(input, roles, skills, reportId);
 
     const top = report.cover.topRoles[0];
-    const topRole = top?.roleName || "—";
+    const isRouteB = report.cover.route === "B";
+    const topRole =
+      isRouteB && report.cover.lockedTarget?.industry
+        ? `${report.cover.lockedTarget.industry} · ${top?.roleName || "—"}`
+        : top?.roleName || "—";
     const topScore = top?.matchScore ?? 0;
+    const labelText = isRouteB ? "你的目标匹配度" : "Top 1 角色匹配";
     const { p25, p50, p75 } = report.salary;
     const hasSalary = p50 > 0;
 
@@ -124,7 +129,7 @@ export async function GET(
                 fontWeight: 400,
               }}
             >
-              Top 1 角色匹配
+              {labelText}
             </div>
             <div
               style={{
