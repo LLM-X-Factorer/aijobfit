@@ -47,7 +47,7 @@ docker compose up -d --build # Docker (port 3004:3000)
 
 ### UI 组件
 
-- `src/components/Report*.tsx` — 7 节报告组件（Cover / Roles / Salary / Gap / Paths / Actions + 第 7 节合并到 Actions）。Cover & Roles 按 `data.route` 切 A/B 渲染；Roles 显示 whyMatched 推理；Paths/Actions 按 audience 切应届/社招文案
+- `src/components/Report*.tsx` — 7 节报告组件（Cover / Roles / Salary / Gap / Paths / Actions + 第 7 节合并到 Actions）。Cover & Roles 按 `data.route` 切 A/B 渲染；Roles 显示 whyMatched 推理；Paths/Actions 按 audience 切应届/社招文案。报告底部按 route 切 CTA：路线 A → "切到目标 Gap 诊断"；路线 B → "重选目标" + "让系统推荐 Top 3"
 - `src/components/ReportFallbackNotice.tsx` — 0-match 兜底提示（黄色 banner，解释 required_skills 命中 0 的原因 + 推荐 target track keySkills）
 - `src/components/LockedSections.tsx` — 后 4 节软门槛。`useSyncExternalStore` 读 localStorage `aijobfit_unlocked`，激活码 `AIJOB-2026`（大小写不敏感，trimmed）
 - `src/components/AssistantQR.tsx` — 小助理微信 QR 组件，默认读 `public/qr-assistant.png`，env `NEXT_PUBLIC_ASSISTANT_QR_URL` 可覆盖
@@ -55,7 +55,7 @@ docker compose up -d --build # Docker (port 3004:3000)
 - `src/components/DiagnosisFormB.tsx` — 路线 B 多步表单（锁定行业 + 岗位 → 背景 + 技能 → 偏好），含 route_b_submit 埋点；用 `useSearchParams` 读 `?from=<hash>` 预填
 - `src/components/FormFieldRender.tsx` — 表单字段渲染 helper（路线 A/B 共用）
 - `src/components/TrackOverview.tsx` — 4 主线卡片组件（首页 + Step 2 折叠面板共用），数据驱动从 TRACKS iterate
-- `src/components/SharePoster.tsx` — 1080×1920 竖版 Canvas 海报（client），QR 指向首页引流
+- `src/components/SharePoster.tsx` — 1080×1920 竖版 Canvas 海报（client），QR 指向首页引流。路线 B 时切到"锁定目标 · 匹配度"标题 + industry · roleName 拼接 + 跳过 4 主线节
 
 ### 路由
 
@@ -100,7 +100,7 @@ docker compose up -d --build # Docker (port 3004:3000)
 - **加微信漏斗**：前 3 节开放 / 后 4 节遮罩 / 激活码 AIJOB-2026（#7 #8）
 - **移动端适配**：375px 基线，全站断点重排（#6）
 - **微信生态**：方形 OG 800×800、WebView 复制链接降级、长按 QR 识别（#9 #5）
-- **漏斗埋点**：form_submit / route_b_submit / report_view / report_reject_top3_click / mask_see / code_enter_{success,fail}（#10 #15 #21）
+- **漏斗埋点**：form_submit / route_b_submit / report_view / report_reject_top3_click / report_b_reselect_target_click / report_b_switch_to_a_click / mask_see / code_enter_{success,fail}（#10 #15 #21 + 路线 B share/CTA polish）
 - **算法修复**：calcTrackScores 走全量、稀疏角色置信度惩罚、fallback 锚点 hoist、Gap priority 基线（#11）
 - **真 QR 替换**：`public/qr-assistant.png`（500×450，2026-04-28），生产端到端浏览器测试已通（#12）
 - **移动端 UI polish**：报告封面 `currentJob` wrap、Gap 行 mobile 堆叠（`flex-col sm:flex-row`）、QR size 150→180（rendered 130→160）、blur 容器 420→480
@@ -109,6 +109,9 @@ docker compose up -d --build # Docker (port 3004:3000)
 - **报告兜底 CTA**：路线 A 报告底部"切到目标 Gap 诊断"，跳转预填用户已填字段（#21）
 - **主线分支透明化**：首页 + 表单 step 2 展示 4 主线 keySkills + targetUsers + JD 数 + 中位月薪（#20）
 - **应届生一等受众**：yearsExp 加在读学生 / 应届无实习 / 应届有实习分支；ReportPaths + ReportActions 按 audience 切应届/社招文案（#16）
+- **路线 B 分享物适配**：SharePoster 海报 / OG 1200×630 / OG 800×800 在路线 B 切不同 label 与 industry · roleName 拼接，跳过空的 4 主线段
+- **路线 B 双向出口**：路线 B 报告底部 CTA "重选目标"（→ /diagnose-target?from=）+ "让系统推荐 Top 3"（→ /diagnose?from=）；DiagnosisForm 也支持 ?from 预填，跨路线无重填
+- **跨路线提示 + 锁目标 banner**：/diagnose 顶部提示路线 B 入口、/diagnose-target 反向、DiagnosisFormB step 2/3 顶部展示 "已锁目标：[行业] · [岗位]"
 - **CI**：GitHub Actions lint + tsc + build
 - **运营 / 业务文档**：
   - [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) — 话术 / FAQ / 异常处理
@@ -127,4 +130,4 @@ docker compose up -d --build # Docker (port 3004:3000)
 - **#13**：测试 · 微信实机全链路（手机微信扫 QR → 加好友 → 拿激活码，不在代码里）
 - **#14**：数据 · 漏斗埋点观察期 + 门槛调优决策
 
-已关闭：#1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B · #18 whyMatched · #20 主线透明化 · #21 报告兜底 CTA
+已关闭：#1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B · #18 whyMatched · #20 主线透明化 · #21 报告兜底 CTA · #16 应届生（前端 + 文案部分）· #17 部分（CLAUDE.md 锁定决策双路线 + 双受众）
