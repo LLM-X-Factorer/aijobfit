@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TrackOverview from "@/components/TrackOverview";
 
 const HIGHLIGHTS = [
   { num: "2,370", label: "条真实 JD" },
@@ -63,6 +64,19 @@ export default function Home() {
               <p className="text-xs text-slate-500 mt-1">{h.label}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 4 主线总览 */}
+      <section className="px-4 pb-12 sm:pb-16">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 text-center">
+            4 条 AI 转型主线
+          </h2>
+          <p className="text-sm text-slate-500 mb-8 text-center max-w-2xl mx-auto">
+            非程序员转 AI 的 4 个可达方向。诊断会根据你的技能与目标，把你匹配到最合适的那条。
+          </p>
+          <TrackOverview />
         </div>
       </section>
 
