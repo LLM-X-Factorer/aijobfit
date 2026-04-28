@@ -1,12 +1,11 @@
 "use client";
 
 // 小助理微信二维码组件。
-// 默认加载 public/qr-assistant.svg 占位图；通过 NEXT_PUBLIC_ASSISTANT_QR_URL
-// 覆盖为真实二维码（例如 "/qr-assistant.png" 或完整 URL）。
+// 默认加载 public/qr-assistant.jpg；通过 NEXT_PUBLIC_ASSISTANT_QR_URL 可覆盖。
 // 用 <img> 原生元素，支持 iOS / Android / 微信 WebView 长按保存与识别。
 
 const QR_SRC =
-  process.env.NEXT_PUBLIC_ASSISTANT_QR_URL || "/qr-assistant.svg";
+  process.env.NEXT_PUBLIC_ASSISTANT_QR_URL || "/qr-assistant.jpg";
 
 type Props = {
   size?: number;

@@ -43,7 +43,7 @@ docker compose up -d --build # Docker (port 3004:3000)
 - `src/components/Report*.tsx` — 7 节报告组件（Cover / Roles / Salary / Gap / Paths / Actions + 第 7 节合并到 Actions）
 - `src/components/ReportFallbackNotice.tsx` — 0-match 兜底提示（黄色 banner，解释 required_skills 命中 0 的原因 + 推荐 target track keySkills）
 - `src/components/LockedSections.tsx` — 后 4 节软门槛。`useSyncExternalStore` 读 localStorage `aijobfit_unlocked`，激活码 `AIJOB-2026`（大小写不敏感，trimmed）
-- `src/components/AssistantQR.tsx` — 小助理微信 QR 组件，默认读 `public/qr-assistant.svg`，env `NEXT_PUBLIC_ASSISTANT_QR_URL` 可覆盖
+- `src/components/AssistantQR.tsx` — 小助理微信 QR 组件，默认读 `public/qr-assistant.jpg`，env `NEXT_PUBLIC_ASSISTANT_QR_URL` 可覆盖
 - `src/components/DiagnosisForm.tsx` — 多步表单，含 form_submit 埋点
 - `src/components/SharePoster.tsx` — 1080×1920 竖版 Canvas 海报（client），QR 指向首页引流
 
