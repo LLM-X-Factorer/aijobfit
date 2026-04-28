@@ -55,8 +55,8 @@ export default function ReportGap({ data }: { data: GapData }) {
                 key={s.name}
                 className="flex items-center justify-between gap-3 bg-slate-50 rounded-lg px-4 py-3"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="font-medium text-slate-900 truncate">{s.name}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 min-w-0 flex-1">
+                  <span className="font-medium text-slate-900 break-words">{s.name}</span>
                   <span className="text-xs font-mono text-slate-400 shrink-0">
                     JD 出现 {s.importance} 次
                   </span>

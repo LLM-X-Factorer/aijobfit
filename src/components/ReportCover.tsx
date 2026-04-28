@@ -12,7 +12,7 @@ export default function ReportCover({ data }: { data: CoverData }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-sm">
         <div className="bg-slate-50 rounded-lg p-4">
           <p className="text-slate-500">当前职位</p>
-          <p className="font-semibold text-slate-900 truncate">{data.currentJob || "—"}</p>
+          <p className="font-semibold text-slate-900 break-words">{data.currentJob || "—"}</p>
         </div>
         <div className="bg-slate-50 rounded-lg p-4">
           <p className="text-slate-500">工作年限</p>

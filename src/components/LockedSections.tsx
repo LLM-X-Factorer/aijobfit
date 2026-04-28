@@ -85,7 +85,7 @@ function LockOverlay({
     <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
       <div
         aria-hidden
-        className="pointer-events-none select-none blur-md opacity-50 h-[420px] overflow-hidden origin-top"
+        className="pointer-events-none select-none blur-md opacity-50 h-[480px] overflow-hidden origin-top"
         style={{ transform: "scale(1.02)" }}
       >
         {children}
@@ -112,7 +112,7 @@ function LockOverlay({
           </div>
 
           <div className="flex justify-center mb-4">
-            <AssistantQR size={150} caption="扫码加小助理，领取激活码" />
+            <AssistantQR size={180} caption="扫码加小助理，领取激活码" />
           </div>
 
           <form onSubmit={submit} className="space-y-2">
