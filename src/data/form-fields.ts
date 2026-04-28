@@ -31,10 +31,18 @@ export const FORM_FIELDS: FormField[] = [
   },
   {
     id: "yearsExp",
-    label: "工作年限",
+    label: "工作年限 / 在校状态",
     type: "select",
     required: true,
-    options: ["应届", "1-3 年", "3-5 年", "5-10 年", "10+ 年"],
+    options: [
+      "在读学生",
+      "应届生（无实习）",
+      "应届生（有实习）",
+      "1-3 年",
+      "3-5 年",
+      "5-10 年",
+      "10+ 年",
+    ],
     step: 1,
   },
   {
