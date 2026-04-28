@@ -37,6 +37,7 @@ function buildInitialState(fromHash: string | null): FormState {
       motivation: prev.motivation || "",
       timeBudget: prev.timeBudget || "",
       targetIndustry: (prev.industry && prev.industry[0]) || "",
+      targetRoleId: prev.targetRoleId || "",
       expectedSalary:
         prev.expectedSalaryMin && prev.expectedSalaryMax
           ? `${prev.expectedSalaryMin}-${prev.expectedSalaryMax}`
@@ -244,6 +245,21 @@ export default function DiagnosisFormB() {
             </div>
           </>
         )}
+
+        {step !== 1 && (() => {
+          const lockedRole = roles.find((r) => r.role_id === state.targetRoleId);
+          const industry = state.targetIndustry as string;
+          if (!lockedRole && !industry) return null;
+          return (
+            <div className="-mt-2 -mb-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm">
+              <span className="text-slate-500 mr-1.5">已锁目标：</span>
+              <span className="font-bold text-slate-900">
+                {industry && <>{industry} · </>}
+                {lockedRole?.role_name || "—"}
+              </span>
+            </div>
+          );
+        })()}
 
         {step !== 1 &&
           fieldsForStep.map((f) => (

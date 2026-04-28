@@ -18,6 +18,15 @@ export default function DiagnosePage() {
         <p className="text-sm text-slate-500">
           5 个必填 + 5 个推荐字段，约 3 分钟。提交后立即生成报告，URL 可分享。
         </p>
+        <p className="mt-3 text-xs text-slate-500">
+          已经有明确目标？
+          <Link
+            href="/diagnose-target"
+            className="ml-1 text-blue-600 hover:underline font-medium"
+          >
+            切到目标 Gap 诊断 →
+          </Link>
+        </p>
       </div>
       <Suspense
         fallback={

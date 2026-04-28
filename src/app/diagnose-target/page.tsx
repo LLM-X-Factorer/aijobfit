@@ -18,6 +18,15 @@ export default function DiagnoseTargetPage() {
         <p className="text-sm text-slate-500">
           已经有目标岗位 + 行业？选好后，我们围绕这个目标算匹配率 + 缺什么。
         </p>
+        <p className="mt-3 text-xs text-slate-500">
+          还不确定目标？
+          <Link
+            href="/diagnose"
+            className="ml-1 text-blue-600 hover:underline font-medium"
+          >
+            让系统帮你定位 →
+          </Link>
+        </p>
       </div>
       <Suspense
         fallback={
