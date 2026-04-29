@@ -173,8 +173,8 @@ export default function ReportClient({ hash }: { hash: string }) {
             jdTotal={report.meta.jdTotal}
           />
         )}
-        <ReportCover data={report.cover} />
-        <ReportRoles data={report.roles} />
+        <ReportCover data={report.cover} augment={report.augment} />
+        <ReportRoles data={report.roles} augment={report.augment} />
         <ReportSalary data={report.salary} />
         <LockedSections>
           <ReportGap data={report.gap} />

@@ -1,6 +1,12 @@
-import { CoverData } from "@/lib/reportGen";
+import { CoverData, AugmentTargetData } from "@/lib/reportGen";
 
-export default function ReportCover({ data }: { data: CoverData }) {
+export default function ReportCover({
+  data,
+  augment,
+}: {
+  data: CoverData;
+  augment?: AugmentTargetData;
+}) {
   return (
     <section className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 sm:p-8 md:p-12">
       <p className="text-sm font-mono tracking-widest text-blue-600 uppercase mb-3">
@@ -36,7 +42,7 @@ export default function ReportCover({ data }: { data: CoverData }) {
         </div>
       </div>
 
-      {data.route === "A" ? (
+      {data.route === "A" && (
         <>
           {/* 4 主线匹配度横向 bar */}
           <div className="mb-8">
@@ -79,8 +85,9 @@ export default function ReportCover({ data }: { data: CoverData }) {
             </div>
           </div>
         </>
-      ) : (
-        // 路线 B：单一锁定目标 + 匹配率
+      )}
+
+      {data.route === "B" && (
         <div>
           <h3 className="text-sm font-bold text-slate-700 mb-3">你锁定的目标</h3>
           {data.lockedTarget && data.topRoles[0] ? (
@@ -107,6 +114,79 @@ export default function ReportCover({ data }: { data: CoverData }) {
             </div>
           ) : (
             <p className="text-sm text-slate-500">未锁定目标，请回到 /diagnose-target 重新选择</p>
+          )}
+        </div>
+      )}
+
+      {data.route === "C" && augment && (
+        <div className="space-y-4">
+          {/* 留行版：原职业 + AI 增强 头条 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+            <p className="text-xs text-blue-600 font-mono mb-1">
+              留行 + AI 增强 · {augment.matchType === "fuzzy" ? "模糊匹配" : "精确匹配"}
+            </p>
+            <div className="flex items-baseline justify-between flex-wrap gap-3 mb-3">
+              <div>
+                <p className="text-xl sm:text-2xl font-black text-slate-900">
+                  {augment.matchedKey}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  原职业 · 不转行 · 在原岗位加 AI 杠杆
+                </p>
+              </div>
+              {augment.vacancyCount > 0 && (
+                <div className="text-right">
+                  <p className="text-3xl sm:text-4xl font-black text-blue-700">
+                    {augment.vacancyCount}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">条 AI 增强真实 JD</p>
+                </div>
+              )}
+            </div>
+
+            {/* 准备度档位 */}
+            {augment.readiness.tier !== "no-data" && (
+              <div
+                className={`rounded-lg p-3 text-sm ${
+                  augment.readiness.tier === "first-class"
+                    ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
+                    : augment.readiness.tier === "mid"
+                      ? "bg-amber-50 border border-amber-200 text-amber-900"
+                      : "bg-rose-50 border border-rose-200 text-rose-900"
+                }`}
+              >
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-base font-black">{augment.readiness.label}</span>
+                  <span className="text-xs font-mono">
+                    {augment.readiness.matchedCount} / {augment.readiness.totalCount} 项 AI 技能命中
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed">{augment.readiness.message}</p>
+              </div>
+            )}
+            {augment.readiness.tier === "no-data" && (
+              <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                {augment.readiness.message}
+              </p>
+            )}
+          </div>
+
+          {/* 模糊匹配的同义近邻：「你是不是想说…」*/}
+          {augment.alternatives.length > 0 && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <p className="text-xs text-slate-500 mb-2">数据集里相近的原职业：</p>
+              <div className="flex flex-wrap gap-2">
+                {augment.alternatives.map((a) => (
+                  <span
+                    key={a.matchedKey}
+                    className="text-xs bg-white border border-slate-200 text-slate-700 px-2 py-1 rounded-full"
+                  >
+                    {a.matchedKey} · {a.vacancyCount} JD · ¥
+                    {Math.round(a.salaryMedian / 1000)}k
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
