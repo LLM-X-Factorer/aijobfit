@@ -12,6 +12,10 @@
 //  C6 产品经理留行 — augmentSkills 命中度
 //  C7 教师留行 — readiness 档位
 //
+// P2 应届 cases:
+//  C8 应届无实习 + Route A 推荐 — gradContext / gradBreakdown / freshComparison 是否注入
+//  C9 在读学生 + Route B 锁定 — fresh slice 替换显示
+//
 // Pulls live agent-hunt data, runs generateReport, and prints key fields.
 
 import { generateReport } from "../src/lib/reportGen";
@@ -22,6 +26,7 @@ import {
   fetchRolesByCity,
   fetchNarrativeStats,
   fetchRolesAugmentedByProfession,
+  fetchRolesGraduateFriendly,
 } from "../src/lib/fetchAgentHunt";
 import type { UserInput } from "../src/lib/encoding";
 
@@ -39,6 +44,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   ] = await Promise.all([
     fetchRoles(),
     fetchSkills(),
@@ -46,6 +52,7 @@ async function main() {
     fetchRolesByCity(),
     fetchNarrativeStats(),
     fetchRolesAugmentedByProfession(),
+    fetchRolesGraduateFriendly(),
   ]);
 
   const baseInput: UserInput = {
@@ -78,6 +85,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   );
   print("Top 3 角色", r1.cover.topRoles);
   print("行业 context", r1.cover.industryContext);
@@ -104,6 +112,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   );
   print("封面标题", r2.cover.title);
   print("行业 context", r2.cover.industryContext);
@@ -133,6 +142,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   );
   print("薪资 source", r3.salary.source);
   print("薪资 industrySlice", r3.salary.industrySlice);
@@ -168,6 +178,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   );
   print("封面标题", r5.cover.title);
   print("matchedKey", r5.augment?.matchedKey);
@@ -198,6 +209,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   );
   print("matchedKey", r6.augment?.matchedKey);
   print("readiness", r6.augment?.readiness);
@@ -228,6 +240,7 @@ async function main() {
     rolesByCity,
     narrativeStats,
     augmentedByProfession,
+    gradFriendly,
   );
   print("封面标题", r7.cover.title);
   print("matchedKey", r7.augment?.matchedKey);
@@ -237,6 +250,68 @@ async function main() {
   print("achievementRate", r7.salary.achievementRate);
   print("achievementMessage", r7.salary.achievementMessage);
   print("第 6 节 d7 actions", r7.actions.d7);
+
+  // ── C8 应届无实习 + Route A 推荐 ───────────────────────────
+  console.log(BANNER);
+  console.log("C8 · 应届无实习 + Python（Route A）");
+  const c8: UserInput = {
+    ...baseInput,
+    currentJob: "在校学生",
+    yearsExp: "应届生（无实习）",
+    education: "本科",
+    skills: ["Python", "Data Analysis", "ChatGPT", "Prompt Engineering"],
+    targetTrack: ["A · AI 产品经理"],
+    industry: ["互联网"],
+  };
+  const r8 = generateReport(
+    c8,
+    roles,
+    skills,
+    "C8TEST",
+    industrySalary,
+    rolesByCity,
+    narrativeStats,
+    augmentedByProfession,
+    gradFriendly,
+  );
+  print("Top 3", r8.cover.topRoles.map((r) => `${r.roleName} ${r.matchScore}%`));
+  print("audience", r8.paths.audience);
+  print("gradContext", r8.cover.gradContext);
+  print("gradBreakdown", r8.roles.gradBreakdown);
+  print("freshComparison", r8.salary.freshComparison);
+
+  // ── C9 在读学生 + Route B 锁定 algorithm ────────────────
+  console.log(BANNER);
+  console.log("C9 · 在读学生 + Route B 锁定 algorithm");
+  const c9: UserInput = {
+    ...baseInput,
+    currentJob: "在读硕士",
+    yearsExp: "在读学生",
+    education: "硕士",
+    skills: ["Python", "PyTorch", "数据分析"],
+    industry: [],
+    route: "B",
+    targetRoleId: "algorithm",
+  };
+  const r9 = generateReport(
+    c9,
+    roles,
+    skills,
+    "C9TEST",
+    industrySalary,
+    rolesByCity,
+    narrativeStats,
+    augmentedByProfession,
+    gradFriendly,
+  );
+  print("封面标题", r9.cover.title);
+  print("audience", r9.paths.audience);
+  print("gradContext.roleName", r9.cover.gradContext?.roleName);
+  print("gradContext fresh ¥k", r9.cover.gradContext?.freshSalaryMedian);
+  print("gradContext social ¥k", r9.cover.gradContext?.socialSalaryMedian);
+  print("gradContext deltaPct", r9.cover.gradContext?.deltaPct);
+  print("gradContext topCampusCities", r9.cover.gradContext?.topCampusCities);
+  print("gradBreakdown", r9.roles.gradBreakdown);
 
   console.log(BANNER);
 }
