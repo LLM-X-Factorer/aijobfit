@@ -3,6 +3,7 @@
 import { Role, Skill } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { TRACKS } from "@/data/tracks";
+import { inferIndustryFromProfession } from "@/data/profession-to-industry";
 
 export interface WhyMatched {
   hitRequired: string[]; // canonical names of required skills hit
@@ -18,6 +19,9 @@ export interface WhyMatched {
     intersect: string[];
     match: boolean;
   } | null;
+  // 行业 hard filter：用户行业（表单选 + currentJob 推断）若全部不在角色 Top 3 行业里，
+  // 分数乘 0.3 强降权，避免「电气工程师 + 教育」类用户被推 AI 销售。
+  industryHardFilter: { applied: boolean; userIndustriesEN: string[]; roleTopIndustriesEN: string[] } | null;
   zeroHit: boolean;
   reasoning: string[];
 }
@@ -155,6 +159,12 @@ export function matchUserToRoles(
     .map((cn) => INDUSTRY_CN_TO_EN[cn])
     .filter((v): v is string => Boolean(v));
 
+  // 把 currentJob 推断的行业并入：电气工程师 → manufacturing 之类。
+  const inferredIndustryEN = inferIndustryFromProfession(input.currentJob);
+  const userIndustriesENForFilter = inferredIndustryEN
+    ? Array.from(new Set([...userIndustriesEN, inferredIndustryEN]))
+    : userIndustriesEN;
+
   const matches: RoleMatch[] = roles
     // 路线 B：仅算用户锁定的角色；路线 A：排除 "其他" 聚合桶
     .filter((r) =>
@@ -194,6 +204,19 @@ export function matchUserToRoles(
       const advancedPct = roleAdvancedDegreePct(role);
       const isEducationPenalized = advancedPct > 0.5 && userEduLevel < 3;
       if (isEducationPenalized) score *= 0.5;
+
+      // 行业 hard filter：用户行业（表单 + currentJob 推断）与角色 Top 3 行业完全不交时，
+      // ×0.3。原因：industryFit 之前只是 reasoning 信号，不影响分数 → 「教育 + 产品经理」
+      // 用户和「金融 + 产品经理」用户拿到的推荐一样。Top 3 而非 Top 5：要求更严，把
+      // 「该角色主战场」之外的角色明显压下去。路线 B 也照常应用（虽然只有 1 个角色，
+      // reasoning 里的 industryFit 仍能让用户看到行业对照）。
+      const roleTop3IndustriesEN = (role.top_industries || []).slice(0, 3).map((t) => t.industry);
+      const hasIndustrySignal = userIndustriesENForFilter.length > 0;
+      const industryHardFilterApplied =
+        hasIndustrySignal &&
+        roleTop3IndustriesEN.length > 0 &&
+        !userIndustriesENForFilter.some((en) => roleTop3IndustriesEN.includes(en));
+      if (industryHardFilterApplied) score *= 0.3;
 
       score = Math.min(100, Math.round(score));
 
@@ -279,6 +302,18 @@ export function matchUserToRoles(
         }
       }
 
+      if (industryHardFilterApplied) {
+        const userIndustriesCNForMsg = userIndustriesENForFilter
+          .map((en) => INDUSTRY_EN_TO_CN[en] ?? en)
+          .join("、");
+        const roleTopCN = roleTop3IndustriesEN
+          .map((en) => INDUSTRY_EN_TO_CN[en] ?? en)
+          .join(" / ");
+        reasoning.push(
+          `行业 hard filter：你的行业「${userIndustriesCNForMsg}」不在该角色 Top 3 行业（${roleTopCN}）→ 分数 ×0.3 强降权，避免推无关方向。`,
+        );
+      }
+
       if (zeroHit) {
         reasoning.push(
           `建议：先去补 Gap 节列的必备技能，或在路线 B 自己锁定行业 + 岗位重新诊断。`,
@@ -299,6 +334,13 @@ export function matchUserToRoles(
           : null,
         lowConfidence: isLowConfidence ? { skillCoverage } : null,
         industryFit,
+        industryHardFilter: hasIndustrySignal
+          ? {
+              applied: industryHardFilterApplied,
+              userIndustriesEN: userIndustriesENForFilter,
+              roleTopIndustriesEN: roleTop3IndustriesEN,
+            }
+          : null,
         zeroHit,
         reasoning,
       };
