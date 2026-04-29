@@ -13,10 +13,13 @@ export interface UserInput {
   expectedSalaryMin?: number;
   expectedSalaryMax?: number;
   timeBudget?: string;
-  // 路线 A（默认）= 系统推荐 Top 3 角色；路线 B = 用户锁定行业 + 岗位，只诊断匹配率
-  route?: "A" | "B";
+  // A = 系统推荐 Top 3；B = 用户锁定 AI 角色（转行）；C = 留在原行业 + 加 AI 技能
+  route?: "A" | "B" | "C";
   // 路线 B 必填：用户锁定的 14 角色之一的 role_id（如 "product_manager"）
   targetRoleId?: string;
+  // 路线 C 必填：用户锁定的原职业 key（如「电气工程师」），需要能在
+  // roles-augmented-by-profession.json 的 domestic 字典里命中（exact 或 fuzzy）
+  originProfession?: string;
 }
 
 function toBase64Url(str: string): string {
