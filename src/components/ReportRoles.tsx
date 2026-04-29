@@ -23,6 +23,43 @@ export default function ReportRoles({
           : `基于国内 ${data.totalJDs.toLocaleString()} 条真实 JD 聚类的 ${data.totalRoles} 个 AI 角色中，与你最匹配的 Top 3。`}
       </p>
 
+      {data.gradBreakdown && data.gradBreakdown.totalJobs > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+          <p className="text-sm font-bold text-emerald-900 mb-2">
+            🎓 应届可获岗位拆解 · {data.gradBreakdown.roleName}
+          </p>
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div>
+              <p className="text-2xl font-black text-emerald-700 font-mono">
+                {data.gradBreakdown.totalJobs}
+              </p>
+              <p className="text-xs text-emerald-700">总 JD</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black text-emerald-700 font-mono">
+                {data.gradBreakdown.campusJobCount}
+              </p>
+              <p className="text-xs text-emerald-700">校招</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black text-emerald-700 font-mono">
+                {data.gradBreakdown.internshipJobCount}
+              </p>
+              <p className="text-xs text-emerald-700">实习</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black text-emerald-700 font-mono">
+                {data.gradBreakdown.freshJobCount}
+              </p>
+              <p className="text-xs text-emerald-700">应届</p>
+            </div>
+          </div>
+          <p className="text-xs text-emerald-700 mt-2 leading-relaxed">
+            来自 agent-hunt /data/roles-graduate-friendly.json，对应 Top 1 角色。社招岗 ≈ 总 - 校招 - 实习 - 应届。
+          </p>
+        </div>
+      )}
+
       <div className="space-y-4">
         {data.topMatches.map((m, idx) => (
           <div

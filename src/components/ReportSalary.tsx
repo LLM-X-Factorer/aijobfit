@@ -92,6 +92,30 @@ export default function ReportSalary({ data }: { data: SalaryData }) {
             </p>
           </div>
         )}
+
+        {data.freshComparison && (
+          <div className="mt-4 pt-4 border-t border-slate-200 text-sm text-slate-700">
+            <p className="leading-relaxed">
+              <span className="font-bold text-slate-900">🎓 应届口径</span>
+              <span className="text-slate-400 mx-2">·</span>
+              <span className="text-slate-500">校招中位</span>
+              <span className="font-mono text-emerald-700 mx-1">
+                ¥{Math.round(data.freshComparison.freshMedian / 1000)}k
+              </span>
+              <span className="text-slate-400 mx-2">vs</span>
+              <span className="text-slate-500">社招中位</span>
+              <span className="font-mono text-slate-700 mx-1">
+                ¥{Math.round(data.freshComparison.socialMedian / 1000)}k
+              </span>
+              <span className="ml-2 text-xs font-mono text-amber-700">
+                +{data.freshComparison.deltaPct}%
+              </span>
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              （你现在选了应届分支 → 主刻度仍按全国分布画 P25/P50/P75；这一行是校招 vs 社招的纯对照）
+            </p>
+          </div>
+        )}
       </div>
 
       {data.achievementRate !== undefined && data.achievementMessage && (

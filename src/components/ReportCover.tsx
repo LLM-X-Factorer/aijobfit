@@ -15,13 +15,55 @@ export default function ReportCover({
       <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{data.title}</h1>
       <p className="text-sm text-slate-500 mb-2">生成于 {data.generatedAt}</p>
       {data.industryContext && (
-        <p className="text-xs sm:text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-6 inline-block">
+        <p className="text-xs sm:text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3 inline-block">
           {data.industryContext.inferred ? "🔎 推断行业 · " : "📊 "}
           {data.industryContext.industryCN}行业 {data.industryContext.jobCount} 条 AI 增强 JD
           （薪资样本 {data.industryContext.salarySampleSize}）· 其他行业对照见 Section 2
         </p>
       )}
-      {!data.industryContext && <div className="mb-6" />}
+      {data.gradContext && data.gradContext.totalJobs > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-6 text-xs sm:text-sm">
+          <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
+            <span className="font-bold text-emerald-900">
+              🎓 应届口径 · {data.gradContext.roleName}
+            </span>
+            <span className="text-xs text-emerald-700 font-mono">
+              friendly score {data.gradContext.graduateFriendlyScore.toFixed(1)} / 100
+            </span>
+          </div>
+          {data.gradContext.freshSalaryMedian > 0 && data.gradContext.socialSalaryMedian > 0 && (
+            <p className="text-emerald-900 leading-relaxed">
+              校招中位{" "}
+              <span className="font-mono font-bold">
+                ¥{Math.round(data.gradContext.freshSalaryMedian / 1000)}k
+              </span>
+              <span className="text-emerald-600 mx-2">vs</span>
+              社招中位{" "}
+              <span className="font-mono font-bold">
+                ¥{Math.round(data.gradContext.socialSalaryMedian / 1000)}k
+              </span>
+              <span
+                className={`ml-2 font-mono ${
+                  data.gradContext.deltaPct > 0 ? "text-amber-700" : "text-emerald-600"
+                }`}
+              >
+                {data.gradContext.deltaPct > 0 ? "+" : ""}
+                {data.gradContext.deltaPct}%
+              </span>
+            </p>
+          )}
+          {data.gradContext.topCampusCities.length > 0 && (
+            <p className="text-xs text-emerald-700 mt-1.5">
+              应届主战场：
+              {data.gradContext.topCampusCities
+                .map((c) => `${c.city}(${c.count})`)
+                .join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+      {!data.industryContext && !data.gradContext && <div className="mb-6" />}
+      {(data.industryContext || data.gradContext) && <div className="mb-3" />}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-sm">
         <div className="bg-slate-50 rounded-lg p-4">
