@@ -69,3 +69,87 @@ export async function fetchRoles(): Promise<Role[]> {
 export async function fetchSkills(): Promise<Skill[]> {
   return fetchJson<Skill[]>("skills.json");
 }
+
+// 行业 × AI 增强真实 JD 的薪资分布。replace 角色全国 P25/P50/P75 当用户行业匹配时，
+// 让薪资节体现行业差异（金融 30k vs 媒体 12.5k）。
+export interface IndustryAugmentedSalary {
+  by_industry: {
+    industry: string; // 英文 keyword
+    job_count: number;
+    salary_sample_size: number;
+    p25: number;
+    p50: number;
+    p75: number;
+  }[];
+  comparison: {
+    premium_traditional_industries: string[];
+    premium_traditional_median: number;
+    premium_traditional_sample_size: number;
+    internet_median: number;
+    internet_sample_size: number;
+    delta_pct: number;
+  };
+  total_jobs: number;
+}
+
+export async function fetchIndustryAugmentedSalary(): Promise<IndustryAugmentedSalary | null> {
+  // 本地 public/data 没快照，远程不可达就降级为 null（buildSalary 退回到角色全国数据）。
+  try {
+    const r = await fetch(`${REMOTE_BASE}/industry-augmented-salary.json`, {
+      cache: "force-cache",
+    });
+    if (r.ok) return (await r.json()) as IndustryAugmentedSalary;
+  } catch {
+    /* swallow */
+  }
+  return null;
+}
+
+export interface NarrativeStats {
+  totals: { all_jobs: number; labeled_jobs: number };
+  p1_market_basic: {
+    domestic_traditional_aug_total: number;
+    domestic_internet_aug_total: number;
+    domestic_industry_breakdown: { industry: string; count: number }[];
+  };
+}
+
+export async function fetchNarrativeStats(): Promise<NarrativeStats | null> {
+  try {
+    const r = await fetch(`${REMOTE_BASE}/narrative-stats.json`, {
+      cache: "force-cache",
+    });
+    if (r.ok) return (await r.json()) as NarrativeStats;
+  } catch {
+    /* swallow */
+  }
+  return null;
+}
+
+export interface RolesByCity {
+  domestic: Record<
+    string,
+    {
+      role_name: string;
+      by_tier: {
+        tier: string; // 一线 / 新一线 / 其他国内 / 海外 / 远程
+        cities_in_tier: string[];
+        job_count: number;
+        salary: { p25: number; p50: number; p75: number; sample_size: number };
+      }[];
+      top_cities: { city: string; count: number; median: number; sample: number }[];
+    }
+  >;
+}
+
+export async function fetchRolesByCity(): Promise<RolesByCity | null> {
+  try {
+    const r = await fetch(`${REMOTE_BASE}/roles-by-city.json`, {
+      cache: "force-cache",
+    });
+    if (r.ok) return (await r.json()) as RolesByCity;
+  } catch {
+    /* swallow */
+  }
+  return null;
+}

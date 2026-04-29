@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { decodeInput } from "@/lib/encoding";
-import { fetchRoles, fetchSkills } from "@/lib/fetchAgentHunt";
+import { fetchRoles, fetchSkills, fetchIndustryAugmentedSalary } from "@/lib/fetchAgentHunt";
 import { generateReport, Report } from "@/lib/reportGen";
 import { track } from "@/lib/track";
 import { isWeChat } from "@/lib/useragent";
@@ -28,9 +28,13 @@ export default function ReportClient({ hash }: { hash: string }) {
     async function load() {
       try {
         const input = decodeInput(hash);
-        const [roles, skills] = await Promise.all([fetchRoles(), fetchSkills()]);
+        const [roles, skills, industrySalary] = await Promise.all([
+          fetchRoles(),
+          fetchSkills(),
+          fetchIndustryAugmentedSalary(),
+        ]);
         const reportId = hash.slice(0, 8).toUpperCase();
-        const r = generateReport(input, roles, skills, reportId);
+        const r = generateReport(input, roles, skills, reportId, industrySalary);
         setReport(r);
         track("report_view", {
           report_id: reportId,

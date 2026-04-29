@@ -7,7 +7,15 @@ export default function ReportCover({ data }: { data: CoverData }) {
         AI Career Diagnosis · Report #{data.reportId}
       </p>
       <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{data.title}</h1>
-      <p className="text-sm text-slate-500 mb-6">生成于 {data.generatedAt}</p>
+      <p className="text-sm text-slate-500 mb-2">生成于 {data.generatedAt}</p>
+      {data.industryContext && (
+        <p className="text-xs sm:text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-6 inline-block">
+          {data.industryContext.inferred ? "🔎 推断行业 · " : "📊 "}
+          {data.industryContext.industryCN}行业 {data.industryContext.jobCount} 条 AI 增强 JD
+          （薪资样本 {data.industryContext.salarySampleSize}）· 其他行业对照见 Section 2
+        </p>
+      )}
+      {!data.industryContext && <div className="mb-6" />}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-sm">
         <div className="bg-slate-50 rounded-lg p-4">

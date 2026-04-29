@@ -1,7 +1,7 @@
 import { ImageResponse } from "@vercel/og";
 import { decodeInput } from "@/lib/encoding";
 import { generateReport } from "@/lib/reportGen";
-import { loadRoles, loadSkills } from "@/lib/serverData";
+import { loadRoles, loadSkills, loadIndustryAugmentedSalary } from "@/lib/serverData";
 import { loadNotoSansSC } from "@/lib/ogFont";
 
 // 800×800 方形 OG，供微信聊天卡片使用（微信偏好正方形图）。
@@ -29,14 +29,15 @@ export async function GET(
 
   try {
     const input = decodeInput(hash);
-    const [roles, skills, fontRegular, fontBold] = await Promise.all([
+    const [roles, skills, industrySalary, fontRegular, fontBold] = await Promise.all([
       loadRoles(),
       loadSkills(),
+      loadIndustryAugmentedSalary(),
       loadNotoSansSC(400),
       loadNotoSansSC(700),
     ]);
     const reportId = hash.slice(0, 8).toUpperCase();
-    const report = generateReport(input, roles, skills, reportId);
+    const report = generateReport(input, roles, skills, reportId, industrySalary);
 
     const top = report.cover.topRoles[0];
     const isRouteB = report.cover.route === "B";

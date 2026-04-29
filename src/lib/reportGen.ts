@@ -1,10 +1,46 @@
 // UserInput + roles → 7 节报告 JSON
 
-import { Role, Skill } from "./fetchAgentHunt";
+import { Role, Skill, IndustryAugmentedSalary } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { matchUserToRoles, RoleMatch } from "./matching";
 import { TRACKS, Track } from "@/data/tracks";
 import { AudienceType, audienceTypeFromYears } from "./audience";
+import { inferIndustryFromProfession } from "@/data/profession-to-industry";
+
+// 与 matching.ts 同表，保持就地映射避免循环依赖
+const INDUSTRY_CN_TO_EN: Record<string, string> = {
+  互联网: "internet",
+  金融: "finance",
+  医疗: "healthcare",
+  制造: "manufacturing",
+  零售: "retail",
+  教育: "education",
+};
+const INDUSTRY_EN_TO_CN: Record<string, string> = {
+  internet: "互联网",
+  finance: "金融",
+  healthcare: "医疗",
+  manufacturing: "制造",
+  retail: "零售",
+  education: "教育",
+  automotive: "汽车",
+  consulting: "咨询",
+  energy: "能源",
+  government: "政府",
+  media: "媒体",
+  other: "其他",
+  telecom: "通信",
+};
+
+// 用户的行业信号 = 表单 industry + currentJob 推断（去重）
+function userIndustriesEN(input: UserInput): string[] {
+  const fromForm = (input.industry || [])
+    .filter((i) => i && i !== "其他" && i.trim())
+    .map((cn) => INDUSTRY_CN_TO_EN[cn])
+    .filter((v): v is string => Boolean(v));
+  const inferred = inferIndustryFromProfession(input.currentJob);
+  return inferred ? Array.from(new Set([...fromForm, inferred])) : fromForm;
+}
 
 export interface CoverData {
   title: string;
@@ -19,6 +55,14 @@ export interface CoverData {
   route: "A" | "B";
   // 路线 B：用户锁定的目标
   lockedTarget?: { industry?: string; roleName: string };
+  // 用户行业 → AI 增强 JD 切片，让封面带行业 context（"教育行业 59 条 AI 增强 JD"）
+  industryContext?: {
+    industryCN: string;
+    industryEN: string;
+    jobCount: number;
+    salarySampleSize: number;
+    inferred: boolean; // 来自 currentJob 推断而非表单
+  };
 }
 
 export interface RolesData {
@@ -33,6 +77,12 @@ export interface SalaryData {
   p25: number;
   p50: number;
   p75: number;
+  // 当 p25/p50/p75 来自行业切片而非角色全国时，标注切片来源
+  source: "role-national" | "industry-augmented";
+  industrySlice?: {
+    industryCN: string;
+    sampleSize: number;
+  };
   userExpectedMin?: number;
   userExpectedMax?: number;
   reality: "above" | "below" | "in-range" | "no-input";
@@ -94,64 +144,93 @@ function calcTrackScores(matches: RoleMatch[]): { track: Track; score: number }[
   });
 }
 
-function buildSalary(input: UserInput, top: RoleMatch | undefined): SalaryData {
+function buildSalary(
+  input: UserInput,
+  top: RoleMatch | undefined,
+  industrySalary: IndustryAugmentedSalary | null,
+): SalaryData {
   if (!top) {
     return {
       topRoleName: "—",
       p25: 0,
       p50: 0,
       p75: 0,
+      source: "role-national",
       reality: "no-input",
       message: "暂无足够数据",
     };
   }
-  const { p25, median, p75 } = top.role.salary;
+
+  // 默认用角色全国分布。当用户行业（form + 推断）有匹配的切片且 sample_size 足够时，
+  // 替换为「该行业 AI 增强真实 JD」分布 —— 让金融用户看到金融 30k 中位，而不是泛 25k。
+  let p25 = top.role.salary.p25;
+  let p50 = top.role.salary.median;
+  let p75 = top.role.salary.p75;
+  let source: SalaryData["source"] = "role-national";
+  let industrySlice: SalaryData["industrySlice"] | undefined;
+
+  const userIndsEN = userIndustriesEN(input);
+  if (industrySalary && userIndsEN.length > 0) {
+    const matched = industrySalary.by_industry.find(
+      (b) => userIndsEN.includes(b.industry) && b.salary_sample_size >= 30,
+    );
+    if (matched) {
+      p25 = matched.p25;
+      p50 = matched.p50;
+      p75 = matched.p75;
+      source = "industry-augmented";
+      industrySlice = {
+        industryCN: INDUSTRY_EN_TO_CN[matched.industry] ?? matched.industry,
+        sampleSize: matched.salary_sample_size,
+      };
+    }
+  }
+
   const min = input.expectedSalaryMin;
   const max = input.expectedSalaryMax;
+  const sourceLabel = industrySlice
+    ? `${industrySlice.industryCN}行业 AI 增强 JD`
+    : `${top.roleName} 全国`;
+
   if (!min && !max) {
     return {
       topRoleName: top.roleName,
       p25,
-      p50: median,
+      p50,
       p75,
+      source,
+      industrySlice,
       reality: "no-input",
-      message: `${top.roleName} 中位月薪 ${median.toLocaleString()} 元，区间 ${p25.toLocaleString()} - ${p75.toLocaleString()}。`,
+      message: `${sourceLabel}：中位月薪 ${p50.toLocaleString()} 元，区间 ${p25.toLocaleString()} - ${p75.toLocaleString()}。`,
     };
   }
+
   const userMid = ((min || 0) + (max || 0)) / 2 * 1000; // K → 元
+
+  let reality: SalaryData["reality"];
+  let message: string;
   if (userMid > p75) {
-    return {
-      topRoleName: top.roleName,
-      p25,
-      p50: median,
-      p75,
-      userExpectedMin: min,
-      userExpectedMax: max,
-      reality: "above",
-      message: `你的期望（约 ${userMid.toLocaleString()} 元）高于 ${top.roleName} 的 P75（${p75.toLocaleString()}）。要达成需要进入 Top 25%。`,
-    };
+    reality = "above";
+    message = `你的期望（约 ${userMid.toLocaleString()} 元）高于 ${sourceLabel} 的 P75（${p75.toLocaleString()}）。要达成需要进入 Top 25%。`;
+  } else if (userMid < p25) {
+    reality = "below";
+    message = `你的期望（约 ${userMid.toLocaleString()} 元）低于 ${sourceLabel} 的 P25（${p25.toLocaleString()}），市场实际可以更高。`;
+  } else {
+    reality = "in-range";
+    message = `你的期望落在 ${sourceLabel} 的 P25-P75 区间，定位合理。`;
   }
-  if (userMid < p25) {
-    return {
-      topRoleName: top.roleName,
-      p25,
-      p50: median,
-      p75,
-      userExpectedMin: min,
-      userExpectedMax: max,
-      reality: "below",
-      message: `你的期望（约 ${userMid.toLocaleString()} 元）低于 ${top.roleName} 的 P25（${p25.toLocaleString()}），市场实际可以更高。`,
-    };
-  }
+
   return {
     topRoleName: top.roleName,
     p25,
-    p50: median,
+    p50,
     p75,
+    source,
+    industrySlice,
     userExpectedMin: min,
     userExpectedMax: max,
-    reality: "in-range",
-    message: `你的期望落在 ${top.roleName} 的 P25-P75 区间，定位合理。`,
+    reality,
+    message,
   };
 }
 
@@ -218,16 +297,40 @@ function buildActions(input: UserInput, topTrack: Track | null): ActionsData {
   };
 }
 
+function buildIndustryContext(
+  input: UserInput,
+  industrySalary: IndustryAugmentedSalary | null,
+): CoverData["industryContext"] {
+  if (!industrySalary) return undefined;
+  const fromForm = (input.industry || [])
+    .filter((i) => i && i !== "其他" && i.trim())
+    .map((cn) => INDUSTRY_CN_TO_EN[cn])
+    .filter((v): v is string => Boolean(v));
+  const inferred = inferIndustryFromProfession(input.currentJob);
+  const candidate = fromForm[0] || inferred || null;
+  if (!candidate) return undefined;
+  const slice = industrySalary.by_industry.find((b) => b.industry === candidate);
+  if (!slice) return undefined;
+  return {
+    industryCN: INDUSTRY_EN_TO_CN[candidate] ?? candidate,
+    industryEN: candidate,
+    jobCount: slice.job_count,
+    salarySampleSize: slice.salary_sample_size,
+    inferred: !fromForm.includes(candidate),
+  };
+}
+
 export function generateReport(
   input: UserInput,
   roles: Role[],
   skills: Skill[],
   reportId: string,
+  industrySalary: IndustryAugmentedSalary | null = null,
 ): Report {
   const route: "A" | "B" = input.route === "B" ? "B" : "A";
 
   if (route === "B") {
-    return generateRouteBReport(input, roles, skills, reportId);
+    return generateRouteBReport(input, roles, skills, reportId, industrySalary);
   }
 
   const allMatches = matchUserToRoles(input, roles, skills);
@@ -249,10 +352,22 @@ export function generateReport(
       TRACKS[0]
     : null;
 
+  // 行业切片：先尝试 in-industry 优先排序。把用户行业（form + 推断）与角色 Top 3 行业
+  // 求交，至少有 3 个 in-industry 角色才用切片，否则保留全量 Top 3 防止数据过稀。
+  const userIndsEN = userIndustriesEN(input);
+  const inIndustry =
+    userIndsEN.length > 0
+      ? allMatches.filter((m) => {
+          const top3 = (m.role.top_industries || []).slice(0, 3).map((t) => t.industry);
+          return userIndsEN.some((en) => top3.includes(en));
+        })
+      : [];
+
   // Fallback 模式下把锚点角色（例如 B 主线 = operations）hoist 到 top，
   // 避免后续 section 以字典序最靠前的 0% 角色（e.g. AI/LLM 工程师）为主角，
   // 让运营用户看到的 Gap/薪资/Top 3 全部围绕错误角色。
-  let topMatches = allMatches.slice(0, 3);
+  let topMatches =
+    inIndustry.length >= 3 ? inIndustry.slice(0, 3) : allMatches.slice(0, 3);
   if (isFallback && fallbackTrack) {
     const anchorRoleId = fallbackTrack.roleIds.find((rid) => rid !== "other");
     if (anchorRoleId) {
@@ -285,6 +400,7 @@ export function generateReport(
       reportId,
       generatedAt,
       route: "A",
+      industryContext: buildIndustryContext(input, industrySalary),
     },
     roles: {
       topMatches,
@@ -292,7 +408,7 @@ export function generateReport(
       totalJDs: JD_TOTAL,
       route: "A",
     },
-    salary: buildSalary(input, top),
+    salary: buildSalary(input, top, industrySalary),
     gap: buildGap(top),
     paths: { topTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, topTrack),
@@ -314,6 +430,7 @@ function generateRouteBReport(
   roles: Role[],
   skills: Skill[],
   reportId: string,
+  industrySalary: IndustryAugmentedSalary | null,
 ): Report {
   const lockedRoleId = input.targetRoleId || "";
   const matches = matchUserToRoles(input, roles, skills, { lockedRoleId });
@@ -344,6 +461,7 @@ function generateRouteBReport(
       lockedTarget: top
         ? { industry: lockedIndustry, roleName: top.roleName }
         : undefined,
+      industryContext: buildIndustryContext(input, industrySalary),
     },
     roles: {
       topMatches: matches,
@@ -351,7 +469,7 @@ function generateRouteBReport(
       totalJDs: JD_TOTAL,
       route: "B",
     },
-    salary: buildSalary(input, top),
+    salary: buildSalary(input, top, industrySalary),
     gap: buildGap(top),
     paths: { topTrack: lockedTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, lockedTrack),

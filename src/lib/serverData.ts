@@ -4,7 +4,13 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Role, Skill } from "./fetchAgentHunt";
+import type {
+  Role,
+  Skill,
+  IndustryAugmentedSalary,
+  NarrativeStats,
+  RolesByCity,
+} from "./fetchAgentHunt";
 
 async function readJson<T>(filename: string): Promise<T> {
   const p = path.join(process.cwd(), "public", "data", filename);
@@ -18,4 +24,28 @@ export async function loadRoles(): Promise<Role[]> {
 
 export async function loadSkills(): Promise<Skill[]> {
   return readJson<Skill[]>("skills.json");
+}
+
+const REMOTE_BASE = "https://agent-hunt.pages.dev/data";
+
+async function fetchRemoteJson<T>(filename: string): Promise<T | null> {
+  try {
+    const r = await fetch(`${REMOTE_BASE}/${filename}`, { cache: "force-cache" });
+    if (r.ok) return (await r.json()) as T;
+  } catch {
+    /* swallow — server-side OG/route handlers must not throw on data outage */
+  }
+  return null;
+}
+
+export async function loadIndustryAugmentedSalary(): Promise<IndustryAugmentedSalary | null> {
+  return fetchRemoteJson<IndustryAugmentedSalary>("industry-augmented-salary.json");
+}
+
+export async function loadNarrativeStats(): Promise<NarrativeStats | null> {
+  return fetchRemoteJson<NarrativeStats>("narrative-stats.json");
+}
+
+export async function loadRolesByCity(): Promise<RolesByCity | null> {
+  return fetchRemoteJson<RolesByCity>("roles-by-city.json");
 }
