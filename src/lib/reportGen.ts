@@ -1,6 +1,6 @@
 // UserInput + roles → 7 节报告 JSON
 
-import { Role, Skill, IndustryAugmentedSalary } from "./fetchAgentHunt";
+import { Role, Skill, IndustryAugmentedSalary, RolesByCity } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { matchUserToRoles, RoleMatch } from "./matching";
 import { TRACKS, Track } from "@/data/tracks";
@@ -90,6 +90,17 @@ export interface SalaryData {
   // 期望薪资达成概率（基于 percentile 桶）
   achievementRate?: number; // 0-100
   achievementMessage?: string;
+  // 城市分层：「你所在新一线 ¥32k vs 全国 ¥30k」对照
+  citySalary?: {
+    tier: string; // 一线 / 新一线 / 其他国内 / 海外 / 远程
+    p25: number;
+    p50: number;
+    p75: number;
+    sampleSize: number;
+    jobCount: number;
+    nationalP50: number;
+    deltaPct: number; // (city.p50 - national.p50) / national.p50 * 100
+  };
 }
 
 export interface GapData {
@@ -172,10 +183,26 @@ function achievementMessageFor(rate: number, userMid: number, p50: number, p75: 
   return `约 ${rate}% 岗位能开到你期望的 ¥${userMidK}k —— 显著高于市场 P75 ¥${p75K}k，建议重新校准，或锁定垂直行业（金融 / 医疗）头部岗位。`;
 }
 
+// 把用户输入的 city（free text）映射到 roles-by-city 数据集里的 tier。
+// 数据本身就有 cities_in_tier 列表，直接 lookup。命中条件：用户输入 contains 城市名。
+function inferCityTier(
+  userCity: string | undefined,
+  byTier: RolesByCity["domestic"][string]["by_tier"] | undefined,
+): RolesByCity["domestic"][string]["by_tier"][number] | null {
+  if (!userCity || !byTier) return null;
+  const c = userCity.trim();
+  if (!c) return null;
+  for (const t of byTier) {
+    if (t.cities_in_tier.some((city) => c.includes(city) || city.includes(c))) return t;
+  }
+  return null;
+}
+
 function buildSalary(
   input: UserInput,
   top: RoleMatch | undefined,
   industrySalary: IndustryAugmentedSalary | null,
+  rolesByCity: RolesByCity | null = null,
 ): SalaryData {
   if (!top) {
     return {
@@ -230,6 +257,7 @@ function buildSalary(
       industrySlice,
       reality: "no-input",
       message: `${sourceLabel}：中位月薪 ${p50.toLocaleString()} 元，区间 ${p25.toLocaleString()} - ${p75.toLocaleString()}。`,
+      citySalary: buildCitySalary(input, top, rolesByCity, top.role.salary.median),
     };
   }
 
@@ -264,8 +292,34 @@ function buildSalary(
     message,
     achievementRate: rate,
     achievementMessage: achMsg,
+    citySalary: buildCitySalary(input, top, rolesByCity, top.role.salary.median),
   };
 }
+
+function buildCitySalary(
+  input: UserInput,
+  top: RoleMatch,
+  rolesByCity: RolesByCity | null,
+  nationalP50: number,
+): SalaryData["citySalary"] {
+  if (!rolesByCity || !input.city) return undefined;
+  const roleEntry = rolesByCity.domestic[top.roleId];
+  const tier = inferCityTier(input.city, roleEntry?.by_tier);
+  if (!tier || tier.salary.sample_size < 10) return undefined;
+  const cityP50 = tier.salary.p50;
+  const delta = nationalP50 > 0 ? Math.round(((cityP50 - nationalP50) / nationalP50) * 100) : 0;
+  return {
+    tier: tier.tier,
+    p25: tier.salary.p25,
+    p50: cityP50,
+    p75: tier.salary.p75,
+    sampleSize: tier.salary.sample_size,
+    jobCount: tier.job_count,
+    nationalP50,
+    deltaPct: delta,
+  };
+}
+
 
 function buildGap(top: RoleMatch | undefined): GapData {
   if (!top) {
@@ -359,11 +413,12 @@ export function generateReport(
   skills: Skill[],
   reportId: string,
   industrySalary: IndustryAugmentedSalary | null = null,
+  rolesByCity: RolesByCity | null = null,
 ): Report {
   const route: "A" | "B" = input.route === "B" ? "B" : "A";
 
   if (route === "B") {
-    return generateRouteBReport(input, roles, skills, reportId, industrySalary);
+    return generateRouteBReport(input, roles, skills, reportId, industrySalary, rolesByCity);
   }
 
   const allMatches = matchUserToRoles(input, roles, skills);
@@ -441,7 +496,7 @@ export function generateReport(
       totalJDs: JD_TOTAL,
       route: "A",
     },
-    salary: buildSalary(input, top, industrySalary),
+    salary: buildSalary(input, top, industrySalary, rolesByCity),
     gap: buildGap(top),
     paths: { topTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, topTrack),
@@ -464,6 +519,7 @@ function generateRouteBReport(
   skills: Skill[],
   reportId: string,
   industrySalary: IndustryAugmentedSalary | null,
+  rolesByCity: RolesByCity | null,
 ): Report {
   const lockedRoleId = input.targetRoleId || "";
   const matches = matchUserToRoles(input, roles, skills, { lockedRoleId });
@@ -502,7 +558,7 @@ function generateRouteBReport(
       totalJDs: JD_TOTAL,
       route: "B",
     },
-    salary: buildSalary(input, top, industrySalary),
+    salary: buildSalary(input, top, industrySalary, rolesByCity),
     gap: buildGap(top),
     paths: { topTrack: lockedTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, lockedTrack),

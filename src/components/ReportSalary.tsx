@@ -58,6 +58,40 @@ export default function ReportSalary({ data }: { data: SalaryData }) {
           <span className="text-blue-700 font-bold">P50 · {data.p50.toLocaleString()}</span>
           <span>P75 · {data.p75.toLocaleString()}</span>
         </div>
+
+        {data.citySalary && (
+          <div className="mt-4 pt-4 border-t border-slate-200 text-sm text-slate-700">
+            <p className="leading-relaxed">
+              <span className="font-bold text-slate-900">你所在{data.citySalary.tier}</span>
+              <span className="font-mono text-blue-700 mx-1">
+                ¥{Math.round(data.citySalary.p50 / 1000)}k
+              </span>
+              <span className="text-slate-500">中位</span>
+              <span className="text-slate-400 mx-2">vs</span>
+              <span className="font-mono text-slate-700">
+                全国 ¥{Math.round(data.citySalary.nationalP50 / 1000)}k
+              </span>
+              <span
+                className={`ml-2 text-xs font-mono ${
+                  data.citySalary.deltaPct > 0
+                    ? "text-emerald-700"
+                    : data.citySalary.deltaPct < 0
+                      ? "text-rose-700"
+                      : "text-slate-500"
+                }`}
+              >
+                {data.citySalary.deltaPct > 0 ? "+" : ""}
+                {data.citySalary.deltaPct}%
+              </span>
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              （{data.citySalary.tier} {data.citySalary.jobCount} JD · 薪资样本{" "}
+              {data.citySalary.sampleSize}，区间 ¥
+              {Math.round(data.citySalary.p25 / 1000)}k - ¥
+              {Math.round(data.citySalary.p75 / 1000)}k）
+            </p>
+          </div>
+        )}
       </div>
 
       {data.achievementRate !== undefined && data.achievementMessage && (
