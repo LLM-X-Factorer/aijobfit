@@ -8,6 +8,7 @@ import {
   loadNarrativeStats,
   loadRolesByCity,
   loadRolesAugmentedByProfession,
+  loadRolesGraduateFriendly,
 } from "@/lib/serverData";
 import { loadNotoSansSC } from "@/lib/ogFont";
 
@@ -43,6 +44,7 @@ export async function GET(
       rolesByCity,
       narrativeStats,
       augmentedByProfession,
+      gradFriendly,
       fontRegular,
       fontBold,
     ] = await Promise.all([
@@ -52,6 +54,7 @@ export async function GET(
       loadRolesByCity(),
       loadNarrativeStats(),
       loadRolesAugmentedByProfession(),
+      loadRolesGraduateFriendly(),
       loadNotoSansSC(400),
       loadNotoSansSC(700),
     ]);
@@ -65,6 +68,7 @@ export async function GET(
       rolesByCity,
       narrativeStats,
       augmentedByProfession,
+      gradFriendly,
     );
 
     const top = report.cover.topRoles[0];

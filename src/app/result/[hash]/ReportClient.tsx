@@ -10,6 +10,7 @@ import {
   fetchRolesByCity,
   fetchNarrativeStats,
   fetchRolesAugmentedByProfession,
+  fetchRolesGraduateFriendly,
 } from "@/lib/fetchAgentHunt";
 import { generateReport, Report } from "@/lib/reportGen";
 import { track } from "@/lib/track";
@@ -42,6 +43,7 @@ export default function ReportClient({ hash }: { hash: string }) {
           rolesByCity,
           narrativeStats,
           augmentedByProfession,
+          gradFriendly,
         ] = await Promise.all([
           fetchRoles(),
           fetchSkills(),
@@ -49,6 +51,7 @@ export default function ReportClient({ hash }: { hash: string }) {
           fetchRolesByCity(),
           fetchNarrativeStats(),
           fetchRolesAugmentedByProfession(),
+          fetchRolesGraduateFriendly(),
         ]);
         const reportId = hash.slice(0, 8).toUpperCase();
         const r = generateReport(
@@ -60,6 +63,7 @@ export default function ReportClient({ hash }: { hash: string }) {
           rolesByCity,
           narrativeStats,
           augmentedByProfession,
+          gradFriendly,
         );
         setReport(r);
         track("report_view", {

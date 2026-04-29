@@ -7,6 +7,8 @@ import {
   RolesByCity,
   NarrativeStats,
   RolesAugmentedByProfession,
+  RolesGraduateFriendly,
+  GraduateFriendlyEntry,
 } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { matchUserToRoles, RoleMatch, normalizeUserSkills } from "./matching";
@@ -71,6 +73,19 @@ export interface CoverData {
     salarySampleSize: number;
     inferred: boolean; // 来自 currentJob 推断而非表单
   };
+  // audience=fresh-grad 时填充：校招 vs 社招 对照 + 应届可获岗位拆解 + 主战场城市
+  gradContext?: {
+    roleName: string;
+    graduateFriendlyScore: number;
+    totalJobs: number;
+    campusJobCount: number;
+    internshipJobCount: number;
+    freshJobCount: number;
+    freshSalaryMedian: number;
+    socialSalaryMedian: number;
+    deltaPct: number; // (social - fresh) / fresh * 100，社招比应届高多少
+    topCampusCities: { city: string; count: number }[];
+  };
 }
 
 export interface RolesData {
@@ -78,6 +93,14 @@ export interface RolesData {
   totalRoles: number;
   totalJDs: number;
   route: "A" | "B" | "C";
+  // 应届分支：Top 1 角色的应届岗位拆解（校招 / 实习 / 应届 / 总）
+  gradBreakdown?: {
+    roleName: string;
+    totalJobs: number;
+    campusJobCount: number;
+    internshipJobCount: number;
+    freshJobCount: number;
+  };
 }
 
 export interface SalaryData {
@@ -108,6 +131,12 @@ export interface SalaryData {
     jobCount: number;
     nationalP50: number;
     deltaPct: number; // (city.p50 - national.p50) / national.p50 * 100
+  };
+  // 应届分支：校招 vs 社招 中位对照
+  freshComparison?: {
+    freshMedian: number;
+    socialMedian: number;
+    deltaPct: number; // (social - fresh) / fresh * 100
   };
 }
 
@@ -419,6 +448,65 @@ function buildActions(input: UserInput, topTrack: Track | null): ActionsData {
   };
 }
 
+function findGraduateEntry(
+  roleId: string | undefined,
+  gradFriendly: RolesGraduateFriendly | null,
+): GraduateFriendlyEntry | null {
+  if (!roleId || !gradFriendly) return null;
+  return gradFriendly.domestic.find((e) => e.roleId === roleId) ?? null;
+}
+
+function buildGradContext(
+  audience: AudienceType,
+  entry: GraduateFriendlyEntry | null,
+): CoverData["gradContext"] {
+  if (audience !== "fresh-grad" || !entry) return undefined;
+  const fresh = entry.freshSalaryMedian || 0;
+  const social = entry.socialSalaryMedian || 0;
+  const deltaPct = fresh > 0 ? Math.round(((social - fresh) / fresh) * 100) : 0;
+  return {
+    roleName: entry.roleName,
+    graduateFriendlyScore: entry.graduateFriendlyScore,
+    totalJobs: entry.totalJobs,
+    campusJobCount: entry.campusJobCount,
+    internshipJobCount: entry.internshipJobCount,
+    freshJobCount: entry.freshJobCount,
+    freshSalaryMedian: fresh,
+    socialSalaryMedian: social,
+    deltaPct,
+    topCampusCities: entry.topCampusCities.slice(0, 5),
+  };
+}
+
+function buildGradBreakdown(
+  audience: AudienceType,
+  entry: GraduateFriendlyEntry | null,
+): RolesData["gradBreakdown"] {
+  if (audience !== "fresh-grad" || !entry) return undefined;
+  return {
+    roleName: entry.roleName,
+    totalJobs: entry.totalJobs,
+    campusJobCount: entry.campusJobCount,
+    internshipJobCount: entry.internshipJobCount,
+    freshJobCount: entry.freshJobCount,
+  };
+}
+
+function buildFreshComparison(
+  audience: AudienceType,
+  entry: GraduateFriendlyEntry | null,
+): SalaryData["freshComparison"] {
+  if (audience !== "fresh-grad" || !entry) return undefined;
+  const fresh = entry.freshSalaryMedian || 0;
+  const social = entry.socialSalaryMedian || 0;
+  if (fresh === 0 || social === 0) return undefined;
+  return {
+    freshMedian: fresh,
+    socialMedian: social,
+    deltaPct: Math.round(((social - fresh) / fresh) * 100),
+  };
+}
+
 function buildIndustryContext(
   input: UserInput,
   industrySalary: IndustryAugmentedSalary | null,
@@ -451,6 +539,7 @@ export function generateReport(
   rolesByCity: RolesByCity | null = null,
   narrativeStats: NarrativeStats | null = null,
   augmentedByProfession: RolesAugmentedByProfession | null = null,
+  gradFriendly: RolesGraduateFriendly | null = null,
 ): Report {
   const route: "A" | "B" | "C" =
     input.route === "B" ? "B" : input.route === "C" ? "C" : "A";
@@ -483,6 +572,7 @@ export function generateReport(
       rolesByCity,
       jdTotal,
       rolesTotal,
+      gradFriendly,
     );
   }
 
@@ -537,6 +627,13 @@ export function generateReport(
     .filter((t) => t.score > 0)
     .sort((a, b) => b.score - a.score)[0]?.track || fallbackTrack || null;
   const generatedAt = new Date().toISOString().slice(0, 10);
+  const audience = audienceTypeFromYears(input.yearsExp);
+  const gradEntry = findGraduateEntry(top?.roleId, gradFriendly);
+  const gradContext = buildGradContext(audience, gradEntry);
+  const gradBreakdown = buildGradBreakdown(audience, gradEntry);
+  const freshComparison = buildFreshComparison(audience, gradEntry);
+
+  const baseSalary = buildSalary(input, top, industrySalary, rolesByCity);
 
   return {
     cover: {
@@ -554,16 +651,18 @@ export function generateReport(
       generatedAt,
       route: "A",
       industryContext: buildIndustryContext(input, industrySalary),
+      gradContext,
     },
     roles: {
       topMatches,
       totalRoles: rolesTotal,
       totalJDs: jdTotal,
       route: "A",
+      gradBreakdown,
     },
-    salary: buildSalary(input, top, industrySalary, rolesByCity),
+    salary: { ...baseSalary, freshComparison },
     gap: buildGap(top),
-    paths: { topTrack, audience: audienceTypeFromYears(input.yearsExp) },
+    paths: { topTrack, audience },
     actions: buildActions(input, topTrack),
     meta: {
       jdTotal,
@@ -587,6 +686,7 @@ function generateRouteBReport(
   rolesByCity: RolesByCity | null,
   jdTotal: number,
   rolesTotal: number,
+  gradFriendly: RolesGraduateFriendly | null,
 ): Report {
   const lockedRoleId = input.targetRoleId || "";
   const matches = matchUserToRoles(input, roles, skills, { lockedRoleId });
@@ -597,6 +697,12 @@ function generateRouteBReport(
 
   // 路线 B 不做兜底锚点切换 — 用户已锁，不替换。0 命中由 whyMatched 诚实告知。
   const isFallback = false;
+  const audience = audienceTypeFromYears(input.yearsExp);
+  const gradEntry = findGraduateEntry(top?.roleId, gradFriendly);
+  const gradContext = buildGradContext(audience, gradEntry);
+  const gradBreakdown = buildGradBreakdown(audience, gradEntry);
+  const freshComparison = buildFreshComparison(audience, gradEntry);
+  const baseSalary = buildSalary(input, top, industrySalary, rolesByCity);
 
   return {
     cover: {
@@ -618,16 +724,18 @@ function generateRouteBReport(
         ? { industry: lockedIndustry, roleName: top.roleName }
         : undefined,
       industryContext: buildIndustryContext(input, industrySalary),
+      gradContext,
     },
     roles: {
       topMatches: matches,
       totalRoles: rolesTotal,
       totalJDs: jdTotal,
       route: "B",
+      gradBreakdown,
     },
-    salary: buildSalary(input, top, industrySalary, rolesByCity),
+    salary: { ...baseSalary, freshComparison },
     gap: buildGap(top),
-    paths: { topTrack: lockedTrack, audience: audienceTypeFromYears(input.yearsExp) },
+    paths: { topTrack: lockedTrack, audience },
     actions: buildActions(input, lockedTrack),
     meta: {
       jdTotal,
