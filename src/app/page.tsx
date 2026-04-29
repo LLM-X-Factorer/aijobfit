@@ -46,18 +46,18 @@ export default function Home() {
           运营 / 设计 / HR / 营销 / 咨询 / 传统行业转 AI · 不卖课不催单
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
-          <Link
-            href="/diagnose"
-            className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
-          >
-            帮我定位 →
-          </Link>
+        <div className="flex flex-col items-center gap-3">
           <Link
             href="/diagnose-target"
-            className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full transition-all"
+            className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
           >
-            我有目标，诊断匹配度 →
+            选行业 + 岗位，诊断匹配度 →
+          </Link>
+          <Link
+            href="/diagnose"
+            className="text-sm text-slate-500 hover:text-blue-700 underline underline-offset-4 decoration-slate-300 hover:decoration-blue-700"
+          >
+            没有具体目标？让系统基于技能推荐 Top 3
           </Link>
         </div>
         <p className="text-xs text-slate-400 mt-3">
@@ -65,8 +65,8 @@ export default function Home() {
         </p>
         <div className="mt-4 max-w-xl text-xs text-slate-500 leading-relaxed">
           <p>
-            <span className="font-bold text-blue-700">路线 A 帮我定位</span>：基于你的技能和背景推荐 Top 3 角色 ·{" "}
-            <span className="font-bold text-blue-700">路线 B 目标 Gap 诊断</span>：你锁定行业 + 岗位，算匹配率 + Gap
+            正确的流程是「先选行业 + 岗位 → 再输背景」，我们只对你锁定的目标算匹配率 + Gap。
+            如果连方向都还没定，可以先走系统推荐 Top 3。
           </p>
         </div>
 
