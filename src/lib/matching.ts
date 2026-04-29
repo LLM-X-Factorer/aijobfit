@@ -2,7 +2,7 @@
 
 import { Role, Skill } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
-import { TRACKS } from "@/data/tracks";
+import { TRACKS, TRANSITION_TRACKS, Track } from "@/data/tracks";
 import { inferIndustryFromProfession } from "@/data/profession-to-industry";
 
 export interface WhyMatched {
@@ -22,6 +22,14 @@ export interface WhyMatched {
   // 行业 hard filter：用户行业（表单选 + currentJob 推断）若全部不在角色 Top 3 行业里，
   // 分数乘 0.3 强降权，避免「电气工程师 + 教育」类用户被推 AI 销售。
   industryHardFilter: { applied: boolean; userIndustriesEN: string[]; roleTopIndustriesEN: string[] } | null;
+  // 主线指纹：用户填的某些技能（如「剪映」「ComfyUI」）属于该角色所在主线的 keySkills，
+  // 这是「为什么我勾选 X 就被推 Y 角色」的因果链。让业务方质疑「我会剪映就推 AIGC？」
+  // 这种黑盒推荐有可解释性。
+  trackFingerprint: {
+    trackId: string;
+    trackName: string;
+    matchedUserSkills: string[];
+  } | null;
   zeroHit: boolean;
   reasoning: string[];
 }
@@ -131,6 +139,28 @@ const educationLevel: Record<string, number> = {
   硕士: 3,
   博士: 4,
 };
+
+// 角色 → 4 主线（A-D）映射。E 不参与。
+function findRoleTrack(roleId: string): Track | undefined {
+  return TRANSITION_TRACKS.find((t) => t.roleIds.includes(roleId));
+}
+
+// 用户填的技能里，哪些命中了该主线 keySkills（双向 substring，不区分大小写）。
+// 用于在 reasoning 里写「主线指纹」: 「你勾的剪映 / SD 属于 D 主线 keySkills，所以
+// AIGC 创意类角色出现在你的 Top 3 不是黑盒推荐」。
+export function matchTrackKeySkills(userSkills: string[], track: Track): string[] {
+  const hits = new Set<string>();
+  const lcUser = userSkills.map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const lcKey = track.keySkills.map((k) => k.toLowerCase());
+  for (let i = 0; i < lcUser.length; i++) {
+    const u = lcUser[i];
+    if (!u) continue;
+    if (lcKey.some((k) => u.includes(k) || k.includes(u))) {
+      hits.add(userSkills[i]);
+    }
+  }
+  return Array.from(hits);
+}
 
 export function matchUserToRoles(
   input: UserInput,
@@ -320,6 +350,26 @@ export function matchUserToRoles(
         );
       }
 
+      // 主线指纹：让用户看清「为什么我勾 X 就被推 Y 角色」的因果链。
+      // 不依赖 targetTrackBoost — 即便用户没显式选 target track，只要他填的技能里
+      // 命中了某主线 keySkills，对应主线的角色就会浮上来。这条 reasoning 把这个
+      // 黑盒透明化。
+      const roleTrack = findRoleTrack(role.role_id);
+      const trackKeySkillHits = roleTrack ? matchTrackKeySkills(input.skills, roleTrack) : [];
+      if (roleTrack && trackKeySkillHits.length > 0 && !isTargetTrackBoosted) {
+        reasoning.push(
+          `主线指纹：你勾的「${trackKeySkillHits.join("、")}」属于 ${roleTrack.id} 主线（${roleTrack.name}）的 keySkills → 这是 ${roleTrack.name} 类角色出现在你推荐里的原因，不是黑盒推荐。如果不想看 ${roleTrack.name} 方向，去掉这些技能再做诊断。`,
+        );
+      }
+      const trackFingerprint =
+        roleTrack && trackKeySkillHits.length > 0
+          ? {
+              trackId: roleTrack.id,
+              trackName: roleTrack.name,
+              matchedUserSkills: trackKeySkillHits,
+            }
+          : null;
+
       const whyMatched: WhyMatched = {
         hitRequired: hitRequiredNames,
         hitPreferred: hitPreferredNames,
@@ -341,6 +391,7 @@ export function matchUserToRoles(
               roleTopIndustriesEN: roleTop3IndustriesEN,
             }
           : null,
+        trackFingerprint,
         zeroHit,
         reasoning,
       };

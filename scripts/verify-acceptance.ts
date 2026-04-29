@@ -280,6 +280,38 @@ async function main() {
   print("gradBreakdown", r8.roles.gradBreakdown);
   print("freshComparison", r8.salary.freshComparison);
 
+  // ── CT 主线指纹：「我会剪映就推 AIGC？」业务方质疑 ──────────
+  console.log(BANNER);
+  console.log("CT · 主线指纹：剪映 / Stable Diffusion 应触发 D 主线 reasoning");
+  const ct: UserInput = {
+    ...baseInput,
+    currentJob: "短视频剪辑师",
+    yearsExp: "1-3",
+    education: "本科",
+    skills: ["剪映", "Stable Diffusion", "Midjourney"],
+    targetTrack: ["我不知道"], // 不显式选主线
+    industry: ["互联网"],
+  };
+  const rt = generateReport(
+    ct,
+    roles,
+    skills,
+    "CTTEST",
+    industrySalary,
+    rolesByCity,
+    narrativeStats,
+    augmentedByProfession,
+    gradFriendly,
+  );
+  print("Top 3", rt.cover.topRoles.map((r) => `${r.roleName} ${r.matchScore}%`));
+  print("cover.trackFingerprints", rt.cover.trackFingerprints);
+  for (const m of rt.roles.topMatches.slice(0, 2)) {
+    console.log(`  ─ ${m.roleName}:`);
+    console.log(`     trackFingerprint:`, m.whyMatched.trackFingerprint);
+    const fpReason = m.whyMatched.reasoning.find((r) => r.includes("主线指纹"));
+    if (fpReason) console.log(`     reasoning含指纹: ${fpReason.slice(0, 120)}...`);
+  }
+
   // ── C9 在读学生 + Route B 锁定 algorithm ────────────────
   console.log(BANNER);
   console.log("C9 · 在读学生 + Route B 锁定 algorithm");

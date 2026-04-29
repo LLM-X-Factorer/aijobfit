@@ -11,7 +11,12 @@ import {
   GraduateFriendlyEntry,
 } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
-import { matchUserToRoles, RoleMatch, normalizeUserSkills } from "./matching";
+import {
+  matchUserToRoles,
+  RoleMatch,
+  normalizeUserSkills,
+  matchTrackKeySkills,
+} from "./matching";
 import { matchProfession } from "./professionMatch";
 import { TRACKS, TRANSITION_TRACKS, Track } from "@/data/tracks";
 import { AudienceType, audienceTypeFromYears } from "./audience";
@@ -86,6 +91,15 @@ export interface CoverData {
     deltaPct: number; // (social - fresh) / fresh * 100，社招比应届高多少
     topCampusCities: { city: string; count: number }[];
   };
+  // 主线指纹扫描（不依赖 trackScores）：用户技能命中哪几条主线的 keySkills。
+  // 解决「D 主线 roleIds=['other'] 永远 0%、用户看不到 D 信号」+ 业务方质疑「我会
+  // 剪映就推 AIGC？」的可解释性问题。空数组表示无命中。
+  trackFingerprints?: {
+    trackId: string;
+    trackName: string;
+    matchedSkills: string[];
+    keySkillsTotal: number;
+  }[];
 }
 
 export interface RolesData {
@@ -450,6 +464,24 @@ function buildActions(input: UserInput, topTrack: Track | null): ActionsData {
   };
 }
 
+function buildTrackFingerprints(input: UserInput): CoverData["trackFingerprints"] {
+  const result: NonNullable<CoverData["trackFingerprints"]> = [];
+  for (const t of TRANSITION_TRACKS) {
+    const matched = matchTrackKeySkills(input.skills, t);
+    if (matched.length > 0) {
+      result.push({
+        trackId: t.id,
+        trackName: t.name,
+        matchedSkills: matched,
+        keySkillsTotal: t.keySkills.length,
+      });
+    }
+  }
+  // 按命中数降序，让用户先看到最相关的主线
+  result.sort((a, b) => b.matchedSkills.length - a.matchedSkills.length);
+  return result.length > 0 ? result : undefined;
+}
+
 function findGraduateEntry(
   roleId: string | undefined,
   gradFriendly: RolesGraduateFriendly | null,
@@ -654,6 +686,7 @@ export function generateReport(
       route: "A",
       industryContext: buildIndustryContext(input, industrySalary),
       gradContext,
+      trackFingerprints: buildTrackFingerprints(input),
     },
     roles: {
       topMatches,
@@ -727,6 +760,7 @@ function generateRouteBReport(
         : undefined,
       industryContext: buildIndustryContext(input, industrySalary),
       gradContext,
+      trackFingerprints: buildTrackFingerprints(input),
     },
     roles: {
       topMatches: matches,

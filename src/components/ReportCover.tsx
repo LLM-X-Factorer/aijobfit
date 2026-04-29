@@ -87,7 +87,7 @@ export default function ReportCover({
       {data.route === "A" && (
         <>
           {/* 4 主线匹配度横向 bar */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h3 className="text-sm font-bold text-slate-700 mb-3">你和 4 主线的匹配度</h3>
             <div className="space-y-2">
               {data.trackScores.map(({ track, score }) => (
@@ -107,7 +107,47 @@ export default function ReportCover({
                 </div>
               ))}
             </div>
+            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              主线匹配度 = max（关联角色 matchScore），来自技能 ∩ required/preferred。
+              D 主线 roleIds=&quot;other&quot; 灰度未单独聚类，所以这里始终为 0% — 看下方主线指纹就能看到 D 信号。
+            </p>
           </div>
+
+          {/* 主线指纹扫描：让「我会剪映就推 AIGC？」的因果链透明化 */}
+          {data.trackFingerprints && data.trackFingerprints.length > 0 && (
+            <div className="mb-8 bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <h3 className="text-sm font-bold text-slate-700 mb-2">
+                技能指纹扫描 · 你勾的技能命中了哪些主线？
+              </h3>
+              <div className="space-y-2">
+                {data.trackFingerprints.map((fp) => (
+                  <div key={fp.trackId} className="text-xs sm:text-sm">
+                    <span className="font-mono font-bold text-blue-700 mr-1">{fp.trackId}</span>
+                    <span className="text-slate-700 mr-1">{fp.trackName}</span>
+                    <span className="font-mono text-slate-500 mr-2">
+                      {fp.matchedSkills.length} / {fp.keySkillsTotal}
+                    </span>
+                    <span className="text-slate-700">
+                      命中：
+                      {fp.matchedSkills.map((s) => (
+                        <span
+                          key={s}
+                          className="inline-block bg-white border border-blue-200 text-blue-700 px-1.5 py-0.5 rounded mx-1 text-[11px]"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
+                这是机制透明：你勾的某些技能属于某条主线的 keySkills →
+                那条主线相关角色就有更高概率出现在你 Top 3 里，不是黑盒推荐。
+                想避开某主线，去掉那行命中的技能再做诊断。
+              </p>
+            </div>
+          )}
 
           {/* Top 3 角色 */}
           <div>
