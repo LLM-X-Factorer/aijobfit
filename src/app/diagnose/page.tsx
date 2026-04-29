@@ -24,7 +24,15 @@ export default function DiagnosePage() {
             href="/diagnose-target"
             className="ml-1 text-blue-600 hover:underline font-medium"
           >
-            切到目标 Gap 诊断 →
+            切到目标 Gap 诊断（B）→
+          </Link>
+          {" · "}
+          不想转行？
+          <Link
+            href="/diagnose-augment"
+            className="ml-1 text-blue-600 hover:underline font-medium"
+          >
+            留行 + AI 增强（C）→
           </Link>
         </p>
       </div>

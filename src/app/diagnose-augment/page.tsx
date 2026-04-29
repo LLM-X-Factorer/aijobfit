@@ -24,7 +24,15 @@ export default function DiagnoseAugmentPage() {
             href="/diagnose-target"
             className="ml-1 text-blue-600 hover:underline font-medium"
           >
-            走目标 Gap 诊断 →
+            走目标 Gap 诊断（B）→
+          </Link>
+          {" · "}
+          还不确定？
+          <Link
+            href="/diagnose"
+            className="ml-1 text-blue-600 hover:underline font-medium"
+          >
+            让系统推荐 Top 3（A）→
           </Link>
         </p>
       </div>

@@ -56,18 +56,34 @@ export default async function Home() {
           运营 / 设计 / HR / 营销 / 咨询 / 传统行业转 AI · 不卖课不催单
         </p>
 
-        <div className="flex flex-col items-center gap-3">
-          <Link
-            href="/diagnose-target"
-            className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-4 rounded-full shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
-          >
-            选行业 + 岗位，诊断匹配度 →
-          </Link>
+        <div className="flex flex-col items-center gap-4 w-full max-w-2xl">
+          {/* 双主 CTA：转行（B）/ 留行（C） */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            <Link
+              href="/diagnose-target"
+              className="flex flex-col items-center text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold px-5 py-5 rounded-2xl shadow-lg shadow-blue-600/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <span className="text-base sm:text-lg">我想转行做 AI 角色</span>
+              <span className="text-xs font-normal opacity-90 mt-1.5 leading-relaxed">
+                选行业 + 岗位 → 算匹配率 + Gap
+              </span>
+            </Link>
+            <Link
+              href="/diagnose-augment"
+              className="flex flex-col items-center text-center bg-white hover:bg-slate-50 border-2 border-blue-600 text-blue-700 font-bold px-5 py-5 rounded-2xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
+            >
+              <span className="text-base sm:text-lg">我留在原行业 + 加 AI 技能</span>
+              <span className="text-xs font-normal opacity-90 mt-1.5 leading-relaxed text-slate-500">
+                填原职业 → 看 AI 增强 JD + 缺什么
+              </span>
+            </Link>
+          </div>
+          {/* A 兜底链接 */}
           <Link
             href="/diagnose"
             className="text-sm text-slate-500 hover:text-blue-700 underline underline-offset-4 decoration-slate-300 hover:decoration-blue-700"
           >
-            没有具体目标？让系统基于技能推荐 Top 3
+            两个都不确定？让系统基于你的技能推荐 Top 3
           </Link>
         </div>
         <p className="text-xs text-slate-400 mt-3">
@@ -75,8 +91,8 @@ export default async function Home() {
         </p>
         <div className="mt-4 max-w-xl text-xs text-slate-500 leading-relaxed">
           <p>
-            正确的流程是「先选行业 + 岗位 → 再输背景」，我们只对你锁定的目标算匹配率 + Gap。
-            如果连方向都还没定，可以先走系统推荐 Top 3。
+            转行 vs 留行的差别：转行算「你能不能上 AI 产品经理」；留行算「电气工程师 +
+            AI 技能」这个画像在国内有多少 JD、薪资、你掌握了多少。
           </p>
         </div>
 

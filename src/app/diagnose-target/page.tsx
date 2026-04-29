@@ -24,7 +24,15 @@ export default function DiagnoseTargetPage() {
             href="/diagnose"
             className="ml-1 text-blue-600 hover:underline font-medium"
           >
-            让系统帮你定位 →
+            让系统推荐 Top 3（A）→
+          </Link>
+          {" · "}
+          不想转行？
+          <Link
+            href="/diagnose-augment"
+            className="ml-1 text-blue-600 hover:underline font-medium"
+          >
+            留行 + AI 增强（C）→
           </Link>
         </p>
       </div>

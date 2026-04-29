@@ -187,17 +187,29 @@ export default function ReportClient({ hash }: { hash: string }) {
               这 3 个推荐都不是你想要的？
             </h3>
             <p className="text-sm text-slate-600 mb-5 max-w-xl mx-auto leading-relaxed">
-              换个方式：你自己锁定行业 + 岗位，我们围绕你的目标算匹配率 + Gap，不再给推荐。已填字段会自动带过去，不用重填。
+              换个方式：自己锁定行业 + 岗位，我们围绕你的目标算匹配率 + Gap；
+              或者保留原职业（不转行）+ 加 AI 技能。已填字段会带过去。
             </p>
-            <Link
-              href={`/diagnose-target?from=${encodeURIComponent(hash)}`}
-              onClick={() =>
-                track("report_reject_top3_click", { report_id: report.meta.reportId })
-              }
-              className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
-            >
-              切到目标 Gap 诊断 →
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center">
+              <Link
+                href={`/diagnose-target?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_reject_top3_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
+              >
+                切到目标 Gap 诊断（B）→
+              </Link>
+              <Link
+                href={`/diagnose-augment?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_a_to_c_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
+              >
+                留行 + AI 增强（C）→
+              </Link>
+            </div>
           </section>
         )}
         {report.meta.route === "B" && (
@@ -206,9 +218,9 @@ export default function ReportClient({ hash }: { hash: string }) {
               觉得这个目标不太对？
             </h3>
             <p className="text-sm text-slate-600 mb-5 max-w-xl mx-auto leading-relaxed">
-              你可以换个目标重新诊断，或者让系统基于你的技能推荐 Top 3 角色。已填字段都会带过去。
+              换个目标重新诊断 / 让系统推荐 Top 3 / 或者干脆不转行 + 加 AI 技能。已填字段都会带过去。
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-center">
               <Link
                 href={`/diagnose-target?from=${encodeURIComponent(hash)}`}
                 onClick={() =>
@@ -219,6 +231,15 @@ export default function ReportClient({ hash }: { hash: string }) {
                 重选目标 →
               </Link>
               <Link
+                href={`/diagnose-augment?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_b_to_c_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
+              >
+                留行 + AI 增强（C）→
+              </Link>
+              <Link
                 href={`/diagnose?from=${encodeURIComponent(hash)}`}
                 onClick={() =>
                   track("report_b_switch_to_a_click", { report_id: report.meta.reportId })
@@ -226,6 +247,36 @@ export default function ReportClient({ hash }: { hash: string }) {
                 className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold px-6 py-3 rounded-full transition-all"
               >
                 让系统推荐 Top 3 →
+              </Link>
+            </div>
+          </section>
+        )}
+        {report.meta.route === "C" && (
+          <section className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">
+              想换个角度看？
+            </h3>
+            <p className="text-sm text-slate-600 mb-5 max-w-xl mx-auto leading-relaxed">
+              留行版只看「原职业 + AI 增强」。如果你也想看转行可能性，或者让系统基于技能推荐方向，可以换个路线。已填字段会带过去。
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center">
+              <Link
+                href={`/diagnose-target?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_c_to_b_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-white border-2 border-blue-600 text-blue-700 hover:bg-blue-50 active:bg-blue-100 font-bold px-6 py-3 rounded-full transition-all"
+              >
+                我也想看转行选项（B）→
+              </Link>
+              <Link
+                href={`/diagnose?from=${encodeURIComponent(hash)}`}
+                onClick={() =>
+                  track("report_c_to_a_click", { report_id: report.meta.reportId })
+                }
+                className="inline-block bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold px-6 py-3 rounded-full transition-all"
+              >
+                让系统推荐 Top 3（A）→
               </Link>
             </div>
           </section>
