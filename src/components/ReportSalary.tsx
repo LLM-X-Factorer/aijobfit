@@ -60,12 +60,49 @@ export default function ReportSalary({ data }: { data: SalaryData }) {
         </div>
       </div>
 
-      {data.reality === "above" && (
+      {data.achievementRate !== undefined && data.achievementMessage && (
+        <div
+          className={`rounded-lg border p-3 mt-4 ${
+            data.achievementRate >= 50
+              ? "border-emerald-200 bg-emerald-50"
+              : data.achievementRate >= 25
+                ? "border-amber-200 bg-amber-50"
+                : "border-rose-200 bg-rose-50"
+          }`}
+        >
+          <div className="flex items-baseline gap-2 mb-1">
+            <span
+              className={`text-2xl font-black ${
+                data.achievementRate >= 50
+                  ? "text-emerald-700"
+                  : data.achievementRate >= 25
+                    ? "text-amber-700"
+                    : "text-rose-700"
+              }`}
+            >
+              {data.achievementRate}%
+            </span>
+            <span className="text-xs font-bold text-slate-700">期望薪资达成概率</span>
+          </div>
+          <p
+            className={`text-sm leading-relaxed ${
+              data.achievementRate >= 50
+                ? "text-emerald-800"
+                : data.achievementRate >= 25
+                  ? "text-amber-800"
+                  : "text-rose-800"
+            }`}
+          >
+            {data.achievementMessage}
+          </p>
+        </div>
+      )}
+      {data.achievementRate === undefined && data.reality === "above" && (
         <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
           ⚠️ 期望偏高：达成 P75+ 通常需要垂直行业 know-how 或 AI 工具组合优势。
         </p>
       )}
-      {data.reality === "below" && (
+      {data.achievementRate === undefined && data.reality === "below" && (
         <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-4">
           💡 期望偏低：可以更自信，市场实际可以更高。
         </p>

@@ -87,6 +87,9 @@ export interface SalaryData {
   userExpectedMax?: number;
   reality: "above" | "below" | "in-range" | "no-input";
   message: string;
+  // 期望薪资达成概率（基于 percentile 桶）
+  achievementRate?: number; // 0-100
+  achievementMessage?: string;
 }
 
 export interface GapData {
@@ -142,6 +145,31 @@ function calcTrackScores(matches: RoleMatch[]): { track: Track; score: number }[
     const score = relatedScores.length > 0 ? Math.max(...relatedScores) : 0;
     return { track, score };
   });
+}
+
+// 期望薪资达成概率：把用户期望中位与 P25/P50/P75 桶对照，给一个粗粒度落点。
+// 不是真正的 CDF，只是诚实告诉用户「你期望相对市场分布在哪个段」。
+function achievementRateFor(userMid: number, p25: number, p50: number, p75: number): number {
+  if (userMid <= p25) return 75;
+  if (userMid <= p50) return 50;
+  if (userMid <= p75) return 25;
+  if (userMid <= p75 * 1.3) return 10;
+  return 5;
+}
+
+function achievementMessageFor(rate: number, userMid: number, p50: number, p75: number): string {
+  const userMidK = Math.round(userMid / 1000);
+  const p50K = Math.round(p50 / 1000);
+  const p75K = Math.round(p75 / 1000);
+  if (rate >= 75)
+    return `约 ${rate}% 岗位能开到你期望的 ¥${userMidK}k —— 落在 P25 以下，门槛较低，重点放在拿到 offer 而不是议价。`;
+  if (rate >= 50)
+    return `约 ${rate}% 岗位能开到你期望的 ¥${userMidK}k —— 落在 P25-P50 之间（中位 ¥${p50K}k），是合理目标。`;
+  if (rate >= 25)
+    return `约 ${rate}% 岗位能开到你期望的 ¥${userMidK}k —— 落在 P50-P75 上半区（P75 ¥${p75K}k），需要稀缺技能 / 行业 know-how。`;
+  if (rate >= 10)
+    return `约 ${rate}% 岗位能开到你期望的 ¥${userMidK}k —— 略高于 P75（中位 ¥${p50K}k），建议下调期望 20% 或加强深度技能。`;
+  return `约 ${rate}% 岗位能开到你期望的 ¥${userMidK}k —— 显著高于市场 P75 ¥${p75K}k，建议重新校准，或锁定垂直行业（金融 / 医疗）头部岗位。`;
 }
 
 function buildSalary(
@@ -220,6 +248,9 @@ function buildSalary(
     message = `你的期望落在 ${sourceLabel} 的 P25-P75 区间，定位合理。`;
   }
 
+  const rate = achievementRateFor(userMid, p25, p50, p75);
+  const achMsg = achievementMessageFor(rate, userMid, p50, p75);
+
   return {
     topRoleName: top.roleName,
     p25,
@@ -231,6 +262,8 @@ function buildSalary(
     userExpectedMax: max,
     reality,
     message,
+    achievementRate: rate,
+    achievementMessage: achMsg,
   };
 }
 
