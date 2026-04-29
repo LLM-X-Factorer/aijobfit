@@ -182,3 +182,37 @@ export async function fetchRolesAugmentedByProfession(): Promise<RolesAugmentedB
   }
   return null;
 }
+
+// 14 角色聚类的「应届友好度」切片。aijobfit 在 audience=fresh-grad 时切到这里，让薪资 /
+// 岗位数 / 主战场城市都用应届口径。
+export interface GraduateFriendlyEntry {
+  roleId: string;
+  roleName: string;
+  graduateFriendlyScore: number;
+  totalJobs: number;
+  campusJobCount: number;     // 明确校招岗
+  internshipJobCount: number; // 实习岗
+  freshJobCount: number;      // 应届岗（含校招/实习外的应届可投）
+  freshSalaryMedian: number;
+  socialSalaryMedian: number;
+  topCampusCities: { city: string; count: number }[];
+  applicantSignalCount: number;
+  applicantOfferCount: number;
+}
+
+export interface RolesGraduateFriendly {
+  domestic: GraduateFriendlyEntry[];
+  international: GraduateFriendlyEntry[];
+}
+
+export async function fetchRolesGraduateFriendly(): Promise<RolesGraduateFriendly | null> {
+  try {
+    const r = await fetch(`${REMOTE_BASE}/roles-graduate-friendly.json`, {
+      cache: "force-cache",
+    });
+    if (r.ok) return (await r.json()) as RolesGraduateFriendly;
+  } catch {
+    /* swallow */
+  }
+  return null;
+}

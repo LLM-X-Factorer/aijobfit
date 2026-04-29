@@ -11,6 +11,7 @@ import type {
   NarrativeStats,
   RolesByCity,
   RolesAugmentedByProfession,
+  RolesGraduateFriendly,
 } from "./fetchAgentHunt";
 
 async function readJson<T>(filename: string): Promise<T> {
@@ -53,4 +54,8 @@ export async function loadRolesByCity(): Promise<RolesByCity | null> {
 
 export async function loadRolesAugmentedByProfession(): Promise<RolesAugmentedByProfession | null> {
   return fetchRemoteJson<RolesAugmentedByProfession>("roles-augmented-by-profession.json");
+}
+
+export async function loadRolesGraduateFriendly(): Promise<RolesGraduateFriendly | null> {
+  return fetchRemoteJson<RolesGraduateFriendly>("roles-graduate-friendly.json");
 }
