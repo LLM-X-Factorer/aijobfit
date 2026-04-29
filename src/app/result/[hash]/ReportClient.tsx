@@ -9,6 +9,7 @@ import {
   fetchIndustryAugmentedSalary,
   fetchRolesByCity,
   fetchNarrativeStats,
+  fetchRolesAugmentedByProfession,
 } from "@/lib/fetchAgentHunt";
 import { generateReport, Report } from "@/lib/reportGen";
 import { track } from "@/lib/track";
@@ -34,12 +35,20 @@ export default function ReportClient({ hash }: { hash: string }) {
     async function load() {
       try {
         const input = decodeInput(hash);
-        const [roles, skills, industrySalary, rolesByCity, narrativeStats] = await Promise.all([
+        const [
+          roles,
+          skills,
+          industrySalary,
+          rolesByCity,
+          narrativeStats,
+          augmentedByProfession,
+        ] = await Promise.all([
           fetchRoles(),
           fetchSkills(),
           fetchIndustryAugmentedSalary(),
           fetchRolesByCity(),
           fetchNarrativeStats(),
+          fetchRolesAugmentedByProfession(),
         ]);
         const reportId = hash.slice(0, 8).toUpperCase();
         const r = generateReport(
@@ -50,6 +59,7 @@ export default function ReportClient({ hash }: { hash: string }) {
           industrySalary,
           rolesByCity,
           narrativeStats,
+          augmentedByProfession,
         );
         setReport(r);
         track("report_view", {

@@ -63,7 +63,7 @@ const INDUSTRY_EN_TO_CN: Record<string, string> = {
 
 // 预先构建一个 alias map：把用户输入的常见技能名映射到 skill_id
 // 简化版：同时支持 canonical name 完整匹配 + id 完整匹配 + 子串包含
-function normalizeUserSkills(userSkills: string[], allSkills: Skill[]): Set<string> {
+export function normalizeUserSkills(userSkills: string[], allSkills: Skill[]): Set<string> {
   const ids = new Set<string>();
   const lc = userSkills.map((s) => s.trim().toLowerCase()).filter(Boolean);
 

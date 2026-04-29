@@ -7,6 +7,7 @@ import {
   loadIndustryAugmentedSalary,
   loadNarrativeStats,
   loadRolesByCity,
+  loadRolesAugmentedByProfession,
 } from "@/lib/serverData";
 import { loadNotoSansSC } from "@/lib/ogFont";
 
@@ -35,16 +36,25 @@ export async function GET(
 
   try {
     const input = decodeInput(hash);
-    const [roles, skills, industrySalary, rolesByCity, narrativeStats, fontRegular, fontBold] =
-      await Promise.all([
-        loadRoles(),
-        loadSkills(),
-        loadIndustryAugmentedSalary(),
-        loadRolesByCity(),
-        loadNarrativeStats(),
-        loadNotoSansSC(400),
-        loadNotoSansSC(700),
-      ]);
+    const [
+      roles,
+      skills,
+      industrySalary,
+      rolesByCity,
+      narrativeStats,
+      augmentedByProfession,
+      fontRegular,
+      fontBold,
+    ] = await Promise.all([
+      loadRoles(),
+      loadSkills(),
+      loadIndustryAugmentedSalary(),
+      loadRolesByCity(),
+      loadNarrativeStats(),
+      loadRolesAugmentedByProfession(),
+      loadNotoSansSC(400),
+      loadNotoSansSC(700),
+    ]);
     const reportId = hash.slice(0, 8).toUpperCase();
     const report = generateReport(
       input,
@@ -54,6 +64,7 @@ export async function GET(
       industrySalary,
       rolesByCity,
       narrativeStats,
+      augmentedByProfession,
     );
 
     const top = report.cover.topRoles[0];

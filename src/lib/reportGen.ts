@@ -6,9 +6,11 @@ import {
   IndustryAugmentedSalary,
   RolesByCity,
   NarrativeStats,
+  RolesAugmentedByProfession,
 } from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
-import { matchUserToRoles, RoleMatch } from "./matching";
+import { matchUserToRoles, RoleMatch, normalizeUserSkills } from "./matching";
+import { matchProfession } from "./professionMatch";
 import { TRACKS, Track } from "@/data/tracks";
 import { AudienceType, audienceTypeFromYears } from "./audience";
 import { inferIndustryFromProfession } from "@/data/profession-to-industry";
@@ -58,7 +60,7 @@ export interface CoverData {
   topRoles: { roleName: string; matchScore: number }[];
   reportId: string;
   generatedAt: string;
-  route: "A" | "B";
+  route: "A" | "B" | "C";
   // 路线 B：用户锁定的目标
   lockedTarget?: { industry?: string; roleName: string };
   // 用户行业 → AI 增强 JD 切片，让封面带行业 context（"教育行业 59 条 AI 增强 JD"）
@@ -75,7 +77,7 @@ export interface RolesData {
   topMatches: RoleMatch[];
   totalRoles: number;
   totalJDs: number;
-  route: "A" | "B";
+  route: "A" | "B" | "C";
 }
 
 export interface SalaryData {
@@ -138,7 +140,30 @@ export interface MetaData {
   // 前端会在 Cover 上方显示一个提示，说明原因并建议下一步。
   isFallback: boolean;
   fallbackTrack?: Track | null;
-  route: "A" | "B";
+  route: "A" | "B" | "C";
+  // 路线 C 兜底：用户填的原职业模糊命中数据但 vacancyCount 太少时给提示
+  augmentSparse?: boolean;
+}
+
+// 路线 C 专属：把原职业「+ AI 增强」诊断打成一份独立数据块
+export interface AugmentTargetData {
+  matchedKey: string;
+  matchType: "exact" | "fuzzy" | "no-match";
+  vacancyCount: number;
+  salaryMedian: number;
+  salarySampleSize: number;
+  topIndustries: { industry: string; industryCN: string; count: number; pct: number }[];
+  augmentSkills: { skillId: string; skillName: string; count: number; userHas: boolean }[];
+  sampleTitles: string[];
+  alternatives: { matchedKey: string; vacancyCount: number; salaryMedian: number }[];
+  // 准备度分档：matchedCount / totalCount + 文案
+  readiness: {
+    tier: "first-class" | "mid" | "starter" | "no-data";
+    matchedCount: number;
+    totalCount: number;
+    label: string;
+    message: string;
+  };
 }
 
 export interface Report {
@@ -149,6 +174,8 @@ export interface Report {
   paths: PathsData;
   actions: ActionsData;
   meta: MetaData;
+  // 路线 C 专属：留行 + AI 增强诊断目标
+  augment?: AugmentTargetData;
 }
 
 // JD 总数与角色总数现在从 narrative-stats.json runtime 读，远程不可达时回退到
@@ -423,14 +450,28 @@ export function generateReport(
   industrySalary: IndustryAugmentedSalary | null = null,
   rolesByCity: RolesByCity | null = null,
   narrativeStats: NarrativeStats | null = null,
+  augmentedByProfession: RolesAugmentedByProfession | null = null,
 ): Report {
-  const route: "A" | "B" = input.route === "B" ? "B" : "A";
+  const route: "A" | "B" | "C" =
+    input.route === "B" ? "B" : input.route === "C" ? "C" : "A";
 
   // labeled_jobs 是「带 cluster 标签的 JD」, all_jobs 是「连未聚类的也算」。报告口径用
   // labeled，与 14 角色聚类口径一致。回退到 5673（agent-hunt v0.7 当前最小值）。
   const jdTotal = narrativeStats?.totals.labeled_jobs ?? JD_TOTAL_FALLBACK;
   // 排除 "other" 聚合桶；roles 是数据原文，不再写死 14。
   const rolesTotal = roles.filter((r) => r.role_id !== "other").length;
+
+  if (route === "C") {
+    return generateRouteCReport(
+      input,
+      skills,
+      reportId,
+      industrySalary,
+      augmentedByProfession,
+      jdTotal,
+      rolesTotal,
+    );
+  }
 
   if (route === "B") {
     return generateRouteBReport(
@@ -597,5 +638,338 @@ function generateRouteBReport(
       fallbackTrack: null,
       route: "B",
     },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 路线 C：留行 + AI 增强诊断
+// 用户保留原职业（电气工程师 / 教师 / 销售经理 / ...），把已掌握技能 + 缺的 AI 增强技能
+// 对照 roles-augmented-by-profession.json 数据集。报告强调「在原岗位变得更值钱」而不是「转
+// 行做 AI 角色」。不出 Top 3，不归 4 主线。
+// ─────────────────────────────────────────────────────────────────────────
+
+const AUGMENT_SPARSE_THRESHOLD = 10; // vacancyCount 低于此值视为样本稀疏，给 isFallback 提示
+
+function buildAugmentTarget(
+  input: UserInput,
+  skills: Skill[],
+  augmentedByProfession: RolesAugmentedByProfession | null,
+): AugmentTargetData {
+  const queryKey = (input.originProfession || input.currentJob || "").trim();
+  const result = matchProfession(queryKey, augmentedByProfession);
+  const userSkillIds = normalizeUserSkills(input.skills, skills);
+
+  if (!result.best) {
+    return {
+      matchedKey: queryKey || "—",
+      matchType: "no-match",
+      vacancyCount: 0,
+      salaryMedian: 0,
+      salarySampleSize: 0,
+      topIndustries: [],
+      augmentSkills: [],
+      sampleTitles: [],
+      alternatives: [],
+      readiness: {
+        tier: "no-data",
+        matchedCount: 0,
+        totalCount: 0,
+        label: "数据不足",
+        message: queryKey
+          ? `未在数据集里找到「${queryKey}」的 AI 增强真实 JD。建议改用 Route B 锁定一个 AI 角色诊断。`
+          : "未填写原职业，无法做留行诊断。",
+      },
+    };
+  }
+
+  const { matchedKey, entry, matchType } = result.best;
+  const augSkills = entry.augmentSkills || [];
+  const totalCount = augSkills.length;
+  const matched = augSkills.filter((s) => userSkillIds.has(s.skillId));
+  const matchedCount = matched.length;
+
+  // 准备度分档：augmentSkills 列表本身偏稀（很多原职业只有 1-2 个），按比例 + 绝对值双口径。
+  let tier: AugmentTargetData["readiness"]["tier"];
+  let label: string;
+  let message: string;
+  if (totalCount === 0) {
+    tier = "no-data";
+    label = "AI 增强技能样本稀少";
+    message = `「${matchedKey}」的 AI 增强 JD 还没积累到能稳定提取必备技能。可看 sampleTitles 和 topIndustries 判断方向。`;
+  } else if (matchedCount === 0) {
+    tier = "starter";
+    label = "起步";
+    message = `「${matchedKey}」的 AI 增强 JD 一共出现过 ${totalCount} 项 AI 技能，你目前 0 项命中。先补 1-2 个高频项，门槛就上来了。`;
+  } else if (matchedCount >= Math.max(1, Math.ceil(totalCount * 0.5))) {
+    tier = "first-class";
+    label = "第一梯队";
+    message = `你已掌握 ${matchedCount}/${totalCount} 项「${matchedKey}」AI 增强 JD 出现的技能，在该原职业 + AI 方向已是头部画像。`;
+  } else {
+    tier = "mid";
+    label = "中梯";
+    message = `你掌握 ${matchedCount}/${totalCount} 项「${matchedKey}」AI 增强 JD 关键技能，再补 1-2 项就能进第一梯队。`;
+  }
+
+  const totalIndustryCount = entry.topIndustries.reduce((sum, i) => sum + i.count, 0) || 1;
+
+  return {
+    matchedKey,
+    matchType,
+    vacancyCount: entry.vacancyCount,
+    salaryMedian: entry.salaryMedian,
+    salarySampleSize: entry.salarySampleSize,
+    topIndustries: entry.topIndustries.slice(0, 5).map((i) => ({
+      industry: i.industry,
+      industryCN: INDUSTRY_EN_TO_CN[i.industry] ?? i.industry,
+      count: i.count,
+      pct: Math.round((i.count / totalIndustryCount) * 100),
+    })),
+    augmentSkills: augSkills.map((s) => ({
+      skillId: s.skillId,
+      skillName: skills.find((sk) => sk.id === s.skillId)?.canonical_name ?? s.skillId,
+      count: s.count,
+      userHas: userSkillIds.has(s.skillId),
+    })),
+    sampleTitles: entry.sampleTitles.slice(0, 5),
+    alternatives: result.alternatives
+      .filter((a) => a.matchedKey !== matchedKey)
+      .slice(0, 4)
+      .map((a) => ({
+        matchedKey: a.matchedKey,
+        vacancyCount: a.entry.vacancyCount,
+        salaryMedian: a.entry.salaryMedian,
+      })),
+    readiness: {
+      tier,
+      matchedCount,
+      totalCount,
+      label,
+      message,
+    },
+  };
+}
+
+// 留行版薪资：augmented-by-profession 只有 salaryMedian 单值。优先用「该职业 topIndustries[0]
+// + industry-augmented-salary」拿 P25/P75，否则 ±30% 估算。
+function buildAugmentSalary(
+  input: UserInput,
+  augment: AugmentTargetData,
+  industrySalary: IndustryAugmentedSalary | null,
+): SalaryData {
+  if (augment.matchType === "no-match" || augment.salaryMedian === 0) {
+    return {
+      topRoleName: augment.matchedKey,
+      p25: 0,
+      p50: 0,
+      p75: 0,
+      source: "role-national",
+      reality: "no-input",
+      message: "未匹配到原职业的薪资样本，跳过本节。",
+    };
+  }
+
+  const median = augment.salaryMedian;
+  let p25 = Math.round(median * 0.7);
+  let p75 = Math.round(median * 1.3);
+  let industrySlice: SalaryData["industrySlice"] | undefined;
+  let source: SalaryData["source"] = "role-national";
+
+  // 用原职业 top 行业 + industry-augmented-salary 拿真实 P25/P75
+  if (industrySalary && augment.topIndustries.length > 0) {
+    const topInd = augment.topIndustries[0];
+    const slice = industrySalary.by_industry.find(
+      (b) => b.industry === topInd.industry && b.salary_sample_size >= 30,
+    );
+    if (slice) {
+      // 锚定原职业中位 + 行业的离散度（spread）：保留 median，但用 industry slice 的相对幅度
+      const spreadDown = slice.p50 > 0 ? slice.p25 / slice.p50 : 0.7;
+      const spreadUp = slice.p50 > 0 ? slice.p75 / slice.p50 : 1.3;
+      p25 = Math.round(median * spreadDown);
+      p75 = Math.round(median * spreadUp);
+      industrySlice = {
+        industryCN: topInd.industryCN,
+        sampleSize: slice.salary_sample_size,
+      };
+      source = "industry-augmented";
+    }
+  }
+
+  const min = input.expectedSalaryMin;
+  const max = input.expectedSalaryMax;
+  const sourceLabel = `${augment.matchedKey} + AI 增强 JD`;
+
+  if (!min && !max) {
+    return {
+      topRoleName: augment.matchedKey,
+      p25,
+      p50: median,
+      p75,
+      source,
+      industrySlice,
+      reality: "no-input",
+      message: `${sourceLabel}：中位月薪 ${median.toLocaleString()} 元，区间 ${p25.toLocaleString()} - ${p75.toLocaleString()}（基于 ${augment.salarySampleSize} 条薪资样本，spread 取自 ${industrySlice?.industryCN ?? "粗估"}）。`,
+    };
+  }
+
+  const userMid = ((min || 0) + (max || 0)) / 2 * 1000;
+  let reality: SalaryData["reality"];
+  let message: string;
+  if (userMid > p75) {
+    reality = "above";
+    message = `你的期望（约 ${userMid.toLocaleString()} 元）高于 ${sourceLabel} 的 P75（${p75.toLocaleString()}）。`;
+  } else if (userMid < p25) {
+    reality = "below";
+    message = `你的期望（约 ${userMid.toLocaleString()} 元）低于 ${sourceLabel} 的 P25（${p25.toLocaleString()}），市场实际可以更高。`;
+  } else {
+    reality = "in-range";
+    message = `你的期望落在 ${sourceLabel} 的 P25-P75 区间，定位合理。`;
+  }
+  const rate = achievementRateFor(userMid, p25, median, p75);
+  const achMsg = achievementMessageFor(rate, userMid, median, p75);
+
+  return {
+    topRoleName: augment.matchedKey,
+    p25,
+    p50: median,
+    p75,
+    source,
+    industrySlice,
+    userExpectedMin: min,
+    userExpectedMax: max,
+    reality,
+    message,
+    achievementRate: rate,
+    achievementMessage: achMsg,
+  };
+}
+
+function buildAugmentGap(augment: AugmentTargetData): GapData {
+  if (augment.augmentSkills.length === 0) {
+    return {
+      topRoleName: augment.matchedKey,
+      matchedSkills: [],
+      missingSkills: [],
+      totalRequired: 0,
+      matchedCount: 0,
+    };
+  }
+  const matched = augment.augmentSkills.filter((s) => s.userHas).map((s) => s.skillName);
+  const missing = augment.augmentSkills
+    .filter((s) => !s.userHas)
+    .sort((a, b) => b.count - a.count)
+    .map((s) => ({
+      name: s.skillName,
+      importance: s.count,
+      // augmentSkills 本身就是该职业 AI 增强 JD 必出现的高价值技能，全部按 high 优先
+      priority: "high" as const,
+    }));
+  return {
+    topRoleName: augment.matchedKey,
+    matchedSkills: matched,
+    missingSkills: missing,
+    totalRequired: augment.augmentSkills.length,
+    matchedCount: matched.length,
+  };
+}
+
+function buildAugmentActions(input: UserInput, augment: AugmentTargetData): ActionsData {
+  const audience = audienceTypeFromYears(input.yearsExp);
+  const profession = augment.matchedKey;
+  const topInd = augment.topIndustries[0]?.industryCN || "你的目标行业";
+  const topMissing = augment.augmentSkills
+    .filter((s) => !s.userHas)
+    .sort((a, b) => b.count - a.count)[0]?.skillName;
+  const skillNudge = topMissing
+    ? `锁定 1 个 AI 工具（推荐：${topMissing}）`
+    : "锁定 1 个 AI 工具（Cursor / Claude Code / Dify 任选）";
+
+  if (audience === "fresh-grad") {
+    return {
+      d7: [
+        skillNudge,
+        `把上面的 sampleTitles 作为搜索关键词，去看准 / Boss 直聘各搜 5 条「${profession} + AI」实习/校招岗位看 JD`,
+      ],
+      d30: [
+        `用 ${topMissing || "一个 AI 工具"} 做一个 ${profession} 场景的小项目（自动写报告 / 整理课件 / 处理数据）`,
+        "在简历里加一行：用 X 工具完成了 Y 工作流的自动化",
+      ],
+      d90: [
+        `投出第一批「${profession} + AI 增强」校招简历，跑 5 个面试拿反馈`,
+        "重新做本诊断，看 augmentSkills 命中率是否上来",
+      ],
+    };
+  }
+
+  return {
+    d7: [
+      skillNudge,
+      `把当前工作的 1 个重复任务用 AI 工具改造，记录耗时变化`,
+    ],
+    d30: [
+      `用 ${topMissing || "AI 工具"} 在 ${topInd} 场景做一个小自动化（要能演示给同事 / 上级看）`,
+      `去看准 / Boss 直聘搜「${profession} + AI」JD 5 条，对照自己的简历，标出还缺什么`,
+    ],
+    d90: [
+      `把 30 天里做的 AI 改造写进简历 + 内部述职 / 周报，让公司看到你的 AI 杠杆`,
+      `重新做本诊断，看你的 augmentSkills 命中率是否从 ${augment.readiness.matchedCount}/${augment.readiness.totalCount} 上来`,
+    ],
+  };
+}
+
+function generateRouteCReport(
+  input: UserInput,
+  skills: Skill[],
+  reportId: string,
+  industrySalary: IndustryAugmentedSalary | null,
+  augmentedByProfession: RolesAugmentedByProfession | null,
+  jdTotal: number,
+  rolesTotal: number,
+): Report {
+  const augment = buildAugmentTarget(input, skills, augmentedByProfession);
+  const generatedAt = new Date().toISOString().slice(0, 10);
+  const augmentSparse =
+    augment.matchType === "no-match" ||
+    (augment.vacancyCount > 0 && augment.vacancyCount < AUGMENT_SPARSE_THRESHOLD);
+
+  const title =
+    augment.matchType === "no-match"
+      ? "AI 求职诊断 · 留行版"
+      : `${augment.matchedKey} + AI 增强：${augment.vacancyCount} 条真实 JD 在招`;
+
+  return {
+    cover: {
+      title,
+      currentJob: input.currentJob,
+      yearsExp: input.yearsExp,
+      education: input.education,
+      city: input.city,
+      trackScores: [],
+      topRoles: [],
+      reportId,
+      generatedAt,
+      route: "C",
+      industryContext: buildIndustryContext(input, industrySalary),
+    },
+    roles: {
+      topMatches: [],
+      totalRoles: rolesTotal,
+      totalJDs: jdTotal,
+      route: "C",
+    },
+    salary: buildAugmentSalary(input, augment, industrySalary),
+    gap: buildAugmentGap(augment),
+    paths: { topTrack: null, audience: audienceTypeFromYears(input.yearsExp) },
+    actions: buildAugmentActions(input, augment),
+    meta: {
+      jdTotal,
+      rolesTotal,
+      generatedAt,
+      reportId,
+      isFallback: augment.matchType === "no-match",
+      fallbackTrack: null,
+      route: "C",
+      augmentSparse,
+    },
+    augment,
   };
 }
