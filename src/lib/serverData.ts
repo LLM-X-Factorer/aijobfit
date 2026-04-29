@@ -10,6 +10,7 @@ import type {
   IndustryAugmentedSalary,
   NarrativeStats,
   RolesByCity,
+  RolesAugmentedByProfession,
 } from "./fetchAgentHunt";
 
 async function readJson<T>(filename: string): Promise<T> {
@@ -48,4 +49,8 @@ export async function loadNarrativeStats(): Promise<NarrativeStats | null> {
 
 export async function loadRolesByCity(): Promise<RolesByCity | null> {
   return fetchRemoteJson<RolesByCity>("roles-by-city.json");
+}
+
+export async function loadRolesAugmentedByProfession(): Promise<RolesAugmentedByProfession | null> {
+  return fetchRemoteJson<RolesAugmentedByProfession>("roles-augmented-by-profession.json");
 }

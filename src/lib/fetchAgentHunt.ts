@@ -153,3 +153,32 @@ export async function fetchRolesByCity(): Promise<RolesByCity | null> {
   }
   return null;
 }
+
+// 原职业 × AI 增强真实 JD。用于 Route C「留行 + 加 AI 技能」诊断。
+// schema：domestic[原职业 中文 key] = { vacancyCount, salaryMedian, augmentSkills, topIndustries, sampleTitles }。
+// 上游有 ~420 个 entry，长尾很碎；用时要按 vacancyCount 设质量门槛（>=10 才稳定）。
+export interface ProfessionEntry {
+  vacancyCount: number;
+  salaryMedian: number;
+  salarySampleSize: number;
+  augmentSkills: { skillId: string; count: number }[];
+  topIndustries: { industry: string; count: number }[];
+  sampleTitles: string[];
+}
+
+export interface RolesAugmentedByProfession {
+  domestic: Record<string, ProfessionEntry>;
+  international: Record<string, ProfessionEntry>;
+}
+
+export async function fetchRolesAugmentedByProfession(): Promise<RolesAugmentedByProfession | null> {
+  try {
+    const r = await fetch(`${REMOTE_BASE}/roles-augmented-by-profession.json`, {
+      cache: "force-cache",
+    });
+    if (r.ok) return (await r.json()) as RolesAugmentedByProfession;
+  } catch {
+    /* swallow */
+  }
+  return null;
+}
