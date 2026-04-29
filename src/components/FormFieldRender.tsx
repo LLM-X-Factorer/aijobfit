@@ -76,7 +76,7 @@ export function FormFieldRender({
           <details className="mt-2 group">
             <summary className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer select-none py-1 list-none flex items-center gap-1">
               <span className="transition-transform group-open:rotate-90">▸</span>
-              <span className="hover:underline">4 条主线分别是什么？点开看关键技能、适合人群、JD 数量</span>
+              <span className="hover:underline">5 条主线分别是什么？点开看关键技能、适合人群、JD 数量</span>
             </summary>
             <div className="mt-3 mb-1">
               <TrackOverview />

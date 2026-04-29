@@ -47,7 +47,7 @@ export const COMMON_RESOURCES: Resource[] = [
 ];
 
 // 按主线分类的资源
-export const TRACK_RESOURCES: Record<"A" | "B" | "C" | "D", ResourceGroup> = {
+export const TRACK_RESOURCES: Record<"A" | "B" | "C" | "D" | "E", ResourceGroup> = {
   A: {
     title: "A · AI 产品经理",
     resources: [
@@ -145,6 +145,35 @@ export const TRACK_RESOURCES: Record<"A" | "B" | "C" | "D", ResourceGroup> = {
         name: "Runway 官方教程",
         description: "视频生成头部工具学习路径",
         url: "https://runwayml.com/learn",
+      },
+    ],
+  },
+  E: {
+    title: "E · 留行 + AI 增强",
+    resources: [
+      {
+        emoji: "🛠️",
+        name: "Cursor / Claude Code",
+        description: "把日常工作（写文档、改方案、写脚本）改造成 AI-assisted",
+        url: "https://cursor.com",
+      },
+      {
+        emoji: "🤖",
+        name: "Coze / Dify",
+        description: "搭一个跑你原职业场景的 Agent，给同事 / 上级演示",
+        url: "https://www.coze.cn",
+      },
+      {
+        emoji: "📚",
+        name: "Datawhale 公益训练营",
+        description: "免费，按主题报名 LLM / RAG / Agent，适合在职 + 业余学习",
+        url: "https://datawhale.cn",
+      },
+      {
+        emoji: "🧪",
+        name: "李宏毅老师 LLM 课程",
+        description: "免费 YouTube，帮你建立 LLM 工作机制的直觉",
+        url: "https://www.youtube.com/@HungyiLeeNTU",
       },
     ],
   },

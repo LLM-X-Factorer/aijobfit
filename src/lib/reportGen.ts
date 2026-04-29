@@ -13,7 +13,7 @@ import {
 import { UserInput } from "./encoding";
 import { matchUserToRoles, RoleMatch, normalizeUserSkills } from "./matching";
 import { matchProfession } from "./professionMatch";
-import { TRACKS, Track } from "@/data/tracks";
+import { TRACKS, TRANSITION_TRACKS, Track } from "@/data/tracks";
 import { AudienceType, audienceTypeFromYears } from "./audience";
 import { inferIndustryFromProfession } from "@/data/profession-to-industry";
 
@@ -212,8 +212,10 @@ export interface Report {
 const JD_TOTAL_FALLBACK = 5673;
 
 function calcTrackScores(matches: RoleMatch[]): { track: Track; score: number }[] {
-  return TRACKS.map((track) => {
-    // 一个主线的分数 = 这个主线相关的角色匹配分数最大值（如果有的话），没有则降权
+  // 用 TRANSITION_TRACKS 而不是 TRACKS：E 主线（留行）roleIds=[] 永远 score=0，
+  // 写进 Cover 4 主线 bar 会误导成「你和 E 主线匹配 0%」。E 是 Route C 入口，不参与
+  // Route A 的 4 主线匹配评分。
+  return TRANSITION_TRACKS.map((track) => {
     const relatedScores = matches
       .filter((m) => track.roleIds.includes(m.roleId))
       .map((m) => m.matchScore);

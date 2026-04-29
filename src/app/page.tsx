@@ -1,5 +1,5 @@
 import Link from "next/link";
-import TrackOverview from "@/components/TrackOverview";
+import TrackOverviewServer from "@/components/TrackOverviewServer";
 import { loadNarrativeStats, loadRoles } from "@/lib/serverData";
 
 // 不写死 2370 / 14 — 数据上游在涨。runtime 拉 narrative-stats，远程不可达就用 floor。
@@ -107,16 +107,16 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 4 主线总览 */}
+      {/* 5 主线总览 */}
       <section className="px-4 pb-12 sm:pb-16">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 text-center">
-            4 条 AI 转型主线
+            5 条 AI 求职主线
           </h2>
           <p className="text-sm text-slate-500 mb-8 text-center max-w-2xl mx-auto">
-            非程序员转 AI 的 4 个可达方向。诊断会根据你的技能与目标，把你匹配到最合适的那条。
+            A-D 是转行轨道（系统按你技能 + 行业匹配 14 角色聚类）；E 是留行轨道（保留原职业 + 加 AI 技能）。
           </p>
-          <TrackOverview />
+          <TrackOverviewServer />
         </div>
       </section>
 
