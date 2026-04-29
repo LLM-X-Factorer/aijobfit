@@ -81,7 +81,7 @@ export async function GET() {
               lineHeight: 1.5,
             }}
           >
-            Non-engineer AI career positioning based on 2370+ real JDs.
+            Non-engineer AI career positioning based on 5000+ real JDs.
           </div>
         </div>
 

@@ -13,7 +13,7 @@ export async function generateMetadata({
     const job = input.currentJob?.trim() || "你";
     const title = `${job}的 AI 求职定位报告 | AIJobFit`;
     const description =
-      "基于 2370+ 真实 JD 数据的 AI 求职定位诊断，10 分钟，14 角色匹配，诚实推免费学习资源。";
+      "基于 5000+ 真实 JD 数据的 AI 求职定位诊断，10 分钟，14 角色匹配，诚实推免费学习资源。";
     const ogUrl = `/api/og/${hash}`;
     const ogSquareUrl = `/api/og-square/${hash}`;
     return {

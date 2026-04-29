@@ -8,6 +8,7 @@ import {
   fetchSkills,
   fetchIndustryAugmentedSalary,
   fetchRolesByCity,
+  fetchNarrativeStats,
 } from "@/lib/fetchAgentHunt";
 import { generateReport, Report } from "@/lib/reportGen";
 import { track } from "@/lib/track";
@@ -33,11 +34,12 @@ export default function ReportClient({ hash }: { hash: string }) {
     async function load() {
       try {
         const input = decodeInput(hash);
-        const [roles, skills, industrySalary, rolesByCity] = await Promise.all([
+        const [roles, skills, industrySalary, rolesByCity, narrativeStats] = await Promise.all([
           fetchRoles(),
           fetchSkills(),
           fetchIndustryAugmentedSalary(),
           fetchRolesByCity(),
+          fetchNarrativeStats(),
         ]);
         const reportId = hash.slice(0, 8).toUpperCase();
         const r = generateReport(
@@ -47,6 +49,7 @@ export default function ReportClient({ hash }: { hash: string }) {
           reportId,
           industrySalary,
           rolesByCity,
+          narrativeStats,
         );
         setReport(r);
         track("report_view", {
@@ -155,7 +158,10 @@ export default function ReportClient({ hash }: { hash: string }) {
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 fade-up">
         {report.meta.isFallback && (
-          <ReportFallbackNotice track={report.meta.fallbackTrack} />
+          <ReportFallbackNotice
+            track={report.meta.fallbackTrack}
+            jdTotal={report.meta.jdTotal}
+          />
         )}
         <ReportCover data={report.cover} />
         <ReportRoles data={report.roles} />

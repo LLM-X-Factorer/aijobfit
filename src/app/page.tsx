@@ -1,18 +1,21 @@
 import Link from "next/link";
 import TrackOverview from "@/components/TrackOverview";
+import { loadNarrativeStats, loadRoles } from "@/lib/serverData";
 
-const HIGHLIGHTS = [
-  { num: "2,370", label: "条真实 JD" },
-  { num: "14", label: "个角色聚类" },
-  { num: "4", label: "条主线" },
-  { num: "10 min", label: "完成诊断" },
-];
+// 不写死 2370 / 14 — 数据上游在涨。runtime 拉 narrative-stats，远程不可达就用 floor。
+async function fetchHomeStats() {
+  const [stats, roles] = await Promise.all([loadNarrativeStats(), loadRoles()]);
+  const jdLabeled = stats?.totals.labeled_jobs ?? 5673;
+  const jdAll = stats?.totals.all_jobs ?? 8238;
+  const rolesTotal = roles.filter((r) => r.role_id !== "other").length;
+  return { jdLabeled, jdAll, rolesTotal };
+}
 
 const SELLING_POINTS = [
   {
     icon: "📊",
     title: "基于真实 JD 数据",
-    desc: "不是凭空话术：所有结论都来自 Agent Hunt 平台 2370 条真实招聘数据反推。",
+    desc: "不是凭空话术：所有结论都来自 Agent Hunt 平台数千条真实招聘数据反推。",
   },
   {
     icon: "🎯",
@@ -26,7 +29,14 @@ const SELLING_POINTS = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const { jdLabeled, jdAll, rolesTotal } = await fetchHomeStats();
+  const highlights = [
+    { num: jdAll.toLocaleString(), label: "条真实 JD" },
+    { num: String(rolesTotal), label: "个角色聚类" },
+    { num: "4", label: "条主线" },
+    { num: "10 min", label: "完成诊断" },
+  ];
   return (
     <main className="flex-1 flex flex-col bg-grid">
       {/* Hero */}
@@ -40,7 +50,7 @@ export default function Home() {
           <span className="text-blue-600"> AI 求职定位</span>诊断
         </h1>
         <p className="text-base md:text-lg text-slate-600 max-w-xl mb-2">
-          用 2370+ 条真实招聘 JD 数据，10 分钟告诉你适合做什么 AI 岗位、缺什么技能、怎么补。
+          用 {jdAll.toLocaleString()}+ 条真实招聘 JD 数据，10 分钟告诉你适合做什么 AI 岗位、缺什么技能、怎么补。
         </p>
         <p className="text-sm text-slate-500 mb-10">
           运营 / 设计 / HR / 营销 / 咨询 / 传统行业转 AI · 不卖课不催单
@@ -72,7 +82,7 @@ export default function Home() {
 
         {/* 数据锚点 */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-2xl w-full">
-          {HIGHLIGHTS.map((h) => (
+          {highlights.map((h) => (
             <div key={h.label} className="text-center">
               <p className="text-2xl md:text-3xl font-black text-blue-700 font-mono">{h.num}</p>
               <p className="text-xs text-slate-500 mt-1">{h.label}</p>
@@ -123,7 +133,7 @@ export default function Home() {
             Agent Hunt
           </a>
           {" · "}
-          v0.6（2370 JD · 14 角色聚类 · SCI 评分）
+          {jdLabeled.toLocaleString()} 已聚类 JD / {jdAll.toLocaleString()} 总 JD · {rolesTotal} 角色聚类 · SCI 评分
         </p>
       </footer>
     </main>

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "AIJobFit | 非程序员 AI 求职定位诊断",
   description:
-    "用 2370+ 条真实 JD 数据帮你判断你适合做什么 AI 岗位。10 分钟，14 角色匹配，诚实推荐免费学习资源。",
+    "用 5000+ 条真实 JD 数据帮你判断你适合做什么 AI 岗位。10 分钟，14 角色匹配，诚实推荐免费学习资源。",
   openGraph: {
     title: "AIJobFit | 非程序员 AI 求职定位诊断",
     description: "用真实招聘数据指路，不卖课，不催单。",

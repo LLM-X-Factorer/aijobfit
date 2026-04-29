@@ -298,7 +298,7 @@ async function drawPoster(report: Report): Promise<string> {
   ctx.fillStyle = TEXT_MUTED;
   ctx.font = "400 24px system-ui, -apple-system, sans-serif";
   ctx.fillText(
-    "2370+ 条真实 JD · 14 角色聚类 · 10 分钟出报告",
+    `${report.meta.jdTotal.toLocaleString()}+ 条真实 JD · ${report.meta.rolesTotal} 角色聚类 · 10 分钟出报告`,
     POSTER_W / 2,
     ctaY + 40,
   );

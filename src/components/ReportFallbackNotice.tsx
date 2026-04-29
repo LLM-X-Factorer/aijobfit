@@ -5,9 +5,12 @@ import type { Track } from "@/data/tracks";
 
 export default function ReportFallbackNotice({
   track,
+  jdTotal,
 }: {
   track: Track | null | undefined;
+  jdTotal?: number;
 }) {
+  const totalText = jdTotal && jdTotal > 0 ? jdTotal.toLocaleString() : "数千";
   return (
     <section className="bg-amber-50 border border-amber-200 rounded-2xl p-5 sm:p-6">
       <div className="flex items-start gap-3">
@@ -18,7 +21,7 @@ export default function ReportFallbackNotice({
           </h3>
           <div className="text-sm text-amber-900/80 space-y-2 leading-relaxed">
             <p>
-              我们的角色匹配来自 2370 条真实 AI 岗位 JD 聚类出的 <strong>36 项技能词典</strong>，
+              我们的角色匹配来自 {totalText} 条真实 AI 岗位 JD 聚类出的 <strong>36 项技能词典</strong>，
               清单偏向硬核 AI / ML（Python / LLM / Prompt Engineering / RAG / Dify / Coze 等）。
               你当前选的技能项与这份词典的重合度很低，所以 required_skills 命中为 0。
             </p>

@@ -78,7 +78,7 @@ export async function GET() {
               maxWidth: 1000,
             }}
           >
-            2370+ real JDs · 14 role clusters · 7-section report · Honest free resources
+            5000+ real JDs · 14 role clusters · 7-section report · Honest free resources
           </div>
         </div>
 

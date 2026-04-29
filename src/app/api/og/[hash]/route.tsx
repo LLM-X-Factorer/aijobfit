@@ -1,7 +1,13 @@
 import { ImageResponse } from "@vercel/og";
 import { decodeInput } from "@/lib/encoding";
 import { generateReport } from "@/lib/reportGen";
-import { loadRoles, loadSkills, loadIndustryAugmentedSalary } from "@/lib/serverData";
+import {
+  loadRoles,
+  loadSkills,
+  loadIndustryAugmentedSalary,
+  loadNarrativeStats,
+  loadRolesByCity,
+} from "@/lib/serverData";
 import { loadNotoSansSC } from "@/lib/ogFont";
 
 export const runtime = "nodejs";
@@ -27,15 +33,26 @@ export async function GET(
 
   try {
     const input = decodeInput(hash);
-    const [roles, skills, industrySalary, fontRegular, fontBold] = await Promise.all([
-      loadRoles(),
-      loadSkills(),
-      loadIndustryAugmentedSalary(),
-      loadNotoSansSC(400),
-      loadNotoSansSC(700),
-    ]);
+    const [roles, skills, industrySalary, rolesByCity, narrativeStats, fontRegular, fontBold] =
+      await Promise.all([
+        loadRoles(),
+        loadSkills(),
+        loadIndustryAugmentedSalary(),
+        loadRolesByCity(),
+        loadNarrativeStats(),
+        loadNotoSansSC(400),
+        loadNotoSansSC(700),
+      ]);
     const reportId = hash.slice(0, 8).toUpperCase();
-    const report = generateReport(input, roles, skills, reportId, industrySalary);
+    const report = generateReport(
+      input,
+      roles,
+      skills,
+      reportId,
+      industrySalary,
+      rolesByCity,
+      narrativeStats,
+    );
 
     const top = report.cover.topRoles[0];
     const isRouteB = report.cover.route === "B";
@@ -237,7 +254,7 @@ export async function GET(
               color: TEXT_MUTED,
             }}
           >
-            <span>数据来源：Agent Hunt · 2370+ 真实 JD</span>
+            <span>数据来源：Agent Hunt · {report.meta.jdTotal.toLocaleString()}+ 真实 JD</span>
             <span style={{ fontFamily: "monospace" }}>#{reportId}</span>
           </div>
         </div>

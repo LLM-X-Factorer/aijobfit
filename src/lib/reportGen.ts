@@ -1,6 +1,12 @@
 // UserInput + roles → 7 节报告 JSON
 
-import { Role, Skill, IndustryAugmentedSalary, RolesByCity } from "./fetchAgentHunt";
+import {
+  Role,
+  Skill,
+  IndustryAugmentedSalary,
+  RolesByCity,
+  NarrativeStats,
+} from "./fetchAgentHunt";
 import { UserInput } from "./encoding";
 import { matchUserToRoles, RoleMatch } from "./matching";
 import { TRACKS, Track } from "@/data/tracks";
@@ -145,7 +151,9 @@ export interface Report {
   meta: MetaData;
 }
 
-const JD_TOTAL = 2370;
+// JD 总数与角色总数现在从 narrative-stats.json runtime 读，远程不可达时回退到
+// 「数据源最低保证」（agent-hunt v0.7 时已经 5673 labeled / 8238 raw）。
+const JD_TOTAL_FALLBACK = 5673;
 
 function calcTrackScores(matches: RoleMatch[]): { track: Track; score: number }[] {
   return TRACKS.map((track) => {
@@ -414,11 +422,27 @@ export function generateReport(
   reportId: string,
   industrySalary: IndustryAugmentedSalary | null = null,
   rolesByCity: RolesByCity | null = null,
+  narrativeStats: NarrativeStats | null = null,
 ): Report {
   const route: "A" | "B" = input.route === "B" ? "B" : "A";
 
+  // labeled_jobs 是「带 cluster 标签的 JD」, all_jobs 是「连未聚类的也算」。报告口径用
+  // labeled，与 14 角色聚类口径一致。回退到 5673（agent-hunt v0.7 当前最小值）。
+  const jdTotal = narrativeStats?.totals.labeled_jobs ?? JD_TOTAL_FALLBACK;
+  // 排除 "other" 聚合桶；roles 是数据原文，不再写死 14。
+  const rolesTotal = roles.filter((r) => r.role_id !== "other").length;
+
   if (route === "B") {
-    return generateRouteBReport(input, roles, skills, reportId, industrySalary, rolesByCity);
+    return generateRouteBReport(
+      input,
+      roles,
+      skills,
+      reportId,
+      industrySalary,
+      rolesByCity,
+      jdTotal,
+      rolesTotal,
+    );
   }
 
   const allMatches = matchUserToRoles(input, roles, skills);
@@ -492,8 +516,8 @@ export function generateReport(
     },
     roles: {
       topMatches,
-      totalRoles: 14,
-      totalJDs: JD_TOTAL,
+      totalRoles: rolesTotal,
+      totalJDs: jdTotal,
       route: "A",
     },
     salary: buildSalary(input, top, industrySalary, rolesByCity),
@@ -501,8 +525,8 @@ export function generateReport(
     paths: { topTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, topTrack),
     meta: {
-      jdTotal: JD_TOTAL,
-      rolesTotal: 14,
+      jdTotal,
+      rolesTotal,
       generatedAt,
       reportId,
       isFallback,
@@ -520,6 +544,8 @@ function generateRouteBReport(
   reportId: string,
   industrySalary: IndustryAugmentedSalary | null,
   rolesByCity: RolesByCity | null,
+  jdTotal: number,
+  rolesTotal: number,
 ): Report {
   const lockedRoleId = input.targetRoleId || "";
   const matches = matchUserToRoles(input, roles, skills, { lockedRoleId });
@@ -554,8 +580,8 @@ function generateRouteBReport(
     },
     roles: {
       topMatches: matches,
-      totalRoles: 14,
-      totalJDs: JD_TOTAL,
+      totalRoles: rolesTotal,
+      totalJDs: jdTotal,
       route: "B",
     },
     salary: buildSalary(input, top, industrySalary, rolesByCity),
@@ -563,8 +589,8 @@ function generateRouteBReport(
     paths: { topTrack: lockedTrack, audience: audienceTypeFromYears(input.yearsExp) },
     actions: buildActions(input, lockedTrack),
     meta: {
-      jdTotal: JD_TOTAL,
-      rolesTotal: 14,
+      jdTotal,
+      rolesTotal,
       generatedAt,
       reportId,
       isFallback,
