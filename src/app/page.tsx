@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import TrackOverviewServer from "@/components/TrackOverviewServer";
 import { loadNarrativeStats, loadRoles } from "@/lib/serverData";
 
-// 不写死 2370 / 14 — 数据上游在涨。runtime 拉 narrative-stats，远程不可达就用 floor。
+export const metadata: Metadata = {
+  title: "非程序员 AI 求职定位诊断 · 8238 条真实 JD · 14 角色聚类",
+  description:
+    "运营 / HR / 设计 / 教师 / 电气工程师 / 财务 / 销售想转 AI 或留行加 AI 技能？AIJobFit 用 8238 条国内真实 JD + 14 角色聚类，10 分钟告诉你适合哪个 AI 岗位、缺什么技能、薪资多少。三路线诊断（转行 / 留行 + AI / 系统 Top 3），永久免费，不卖课。",
+  alternates: { canonical: "/" },
+};
+
 async function fetchHomeStats() {
   const [stats, roles] = await Promise.all([loadNarrativeStats(), loadRoles()]);
   const jdLabeled = stats?.totals.labeled_jobs ?? 5673;
@@ -10,6 +17,51 @@ async function fetchHomeStats() {
   const rolesTotal = roles.filter((r) => r.role_id !== "other").length;
   return { jdLabeled, jdAll, rolesTotal };
 }
+
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: "AIJobFit 是免费的吗？要付费解锁吗？",
+    a: "永久免费。报告 7 节里前 3 节（封面 / Top 3 角色 / 薪资）直接看，后 4 节（Gap / 路径 / 7-30-90 Action / 资源）扫码加小助理微信领统一激活码 AIJOB-2026 解锁，整个产品不收费。1V1 咨询、社群、课程在产品外独立运营，与本工具解耦。",
+  },
+  {
+    q: "数据从哪来？为什么说是真实 JD？",
+    a: "数据来自开源仓库 Agent Hunt（github.com/LLM-X-Factorer/agent-hunt），从国内主流招聘平台抓取 8238 条 AI 相关岗位 JD（截至 2026-04-29 已聚类 5673 条），每周更新。每个角色页都附带 JD 数量、薪资 P25/P50/P75、行业分布、城市 tier 分布，所有结论可追溯到样本量。",
+  },
+  {
+    q: "我是电气工程师 / 教师 / 医生 / 销售 / 设计师，能转 AI 吗？",
+    a: "AIJobFit 覆盖 420 条长尾原职业，每条都有「原职业 + AI 增强」真实 JD 数据。比如电气工程师对应制造 / 能源行业的智能制造 AI 岗位，教师对应教育 AI，销售对应 AI 销售 / 商务，设计师对应 AIGC 创意。你既可以选「转行」路线（看自己能不能上 AI 产品经理 / AI 运营），也可以选「留行 + AI 增强」路线（保留原职业，看 AI 增强后的岗位画像）。",
+  },
+  {
+    q: "应届生 / 在读学生可以用吗？",
+    a: "可以。表单分支会问你是「在读学生 / 应届无实习 / 应届有实习」，报告会切换为应届口径：每个角色拆出校招岗 / 实习岗 / 应届可投岗位数 + 应届薪资中位（社招中位的 60%-80%），并标注哪些角色的应届友好度更高。",
+  },
+  {
+    q: "三条路线（转行 / 留行 + AI / 系统推荐）我该选哪个？",
+    a: "首页两个主 CTA 二选一即可：(1) 想转去做 AI 角色 → 选「转行 Gap 诊断」，自己锁定行业 + 岗位看匹配率；(2) 不想离开原行业但想加 AI 技能 → 选「留行 + AI 增强」，填原职业看 AI 增强 JD。如果两个都不确定，走兜底「让系统基于你的技能推荐 Top 3」。三条路线的算法和数据切片不同，结论不互相替代。",
+  },
+  {
+    q: "10 分钟出报告，AI 生成的吗？质量靠谱吗？",
+    a: "不是 AI 生成。报告 7 节全部由确定性算法生成：技能命中 + 稀疏聚类置信度惩罚 + 行业 hard filter + 学历惩罚 + targetTrack 加成；whyMatched 推理链可解释（你能看到为什么是这个推荐，而不是黑盒）。整体逻辑 + 数据切片在 GitHub 公开。",
+  },
+  {
+    q: "报告里推荐的课程是付费的吗？会强行卖课吗？",
+    a: "不会。第 6 节是「自学 / 课程 / 1V1」3 选 1 路径，其中自学路径会诚实推 Datawhale / 阿里云 ModelScope / 李宏毅 LLM 课等免费资源，绝不为了卖课贬低自学。报告里完全没有「今晚优惠」「仅剩 X 名额」的催单。",
+  },
+  {
+    q: "5 主线（A 产品 / B 运营 / C 转型咨询 / D AIGC / E 留行 + AI）的差别？",
+    a: "A-D 是转行轨道，背后对应 14 角色聚类的不同子集：A AI 产品经理（293 JD · 中位 ¥32.5k），B AI 运营 / 训练师（95 JD · ¥23k），C AI 转型咨询（71 JD · ¥35k），D AIGC 创意（剪映 / SD / Midjourney 工具方向）。E 是留行 + AI 增强轨道，不参与 A-D 匹配，单独从 420 长尾原职业 + AI 增强 JD 算准备度档位。",
+  },
+];
+
+const FAQ_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
 
 const SELLING_POINTS = [
   {
@@ -135,6 +187,39 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      {/* FAQ — 可见 + FAQPage schema 双重作用：用户答疑 + AI / 搜索引擎引用 */}
+      <section className="px-4 pb-16 sm:pb-20" id="faq">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 text-center">
+            常见问题
+          </h2>
+          <p className="text-sm text-slate-500 mb-8 text-center">
+            非程序员转 AI / 留行 + AI 增强 / 应届生 AI 求职 — 高频疑问
+          </p>
+          <div className="space-y-3">
+            {FAQ.map((f) => (
+              <details
+                key={f.q}
+                className="group bg-white border border-blue-100 rounded-xl px-5 py-4 shadow-sm open:shadow-md transition-shadow"
+              >
+                <summary className="flex items-center justify-between cursor-pointer list-none font-bold text-slate-900 text-sm sm:text-base">
+                  <span>{f.q}</span>
+                  <span className="ml-4 text-blue-600 transition-transform group-open:rotate-45 text-xl leading-none">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 px-4 py-6 text-center text-xs text-slate-500 bg-white">
