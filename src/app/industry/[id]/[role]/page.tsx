@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { loadRoles, loadRolesByIndustry } from "@/lib/serverData";
 import { INDUSTRY_LIST, getIndustry } from "@/data/industries";
+import { buildOgImages } from "@/lib/ogUrl";
 import type { RolesByIndustry, RolesByIndustryEntry } from "@/lib/fetchAgentHunt";
 
 const SITE_URL =
@@ -72,6 +73,14 @@ export async function generateMetadata({
       description: `中位 ${median} · ${entry.topRegions.slice(0, 3).join(" / ")}`,
       type: "article",
       url: `/industry/${id}/${role}`,
+      images: buildOgImages({
+        title: `${ind.cn} × ${entry.roleName}`,
+        subtitle: `主战场 ${entry.topRegions.slice(0, 3).join(" / ")}`,
+        tag: "二维切片",
+        stat1: `${entry.vacancyCount} 条 JD`,
+        stat2: `中位 ${median}`,
+        stat3: `${entry.salarySampleSize} 样本`,
+      }),
     },
   };
 }

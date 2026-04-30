@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BLOG_POSTS, findPost } from "@/data/blog-posts";
+import { buildOgImages } from "@/lib/ogUrl";
 
 export const dynamicParams = false;
 
@@ -28,6 +29,14 @@ export async function generateMetadata({
       url: `/blog/${slug}`,
       publishedTime: post.publishedAt,
       tags: post.tags,
+      images: buildOgImages({
+        title: post.title,
+        subtitle: post.excerpt.slice(0, 110),
+        tag: "Blog · 数据深度文章",
+        stat1: `${post.readMinutes} 分钟阅读`,
+        stat2: post.publishedAt,
+        stat3: post.tags.slice(0, 2).map((t) => `#${t}`).join(" "),
+      }),
     },
   };
 }

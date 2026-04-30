@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { loadRoles, loadRolesByCity } from "@/lib/serverData";
+import { buildOgImages } from "@/lib/ogUrl";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://aijobfit.llmxfactor.cloud";
@@ -85,6 +86,14 @@ export async function generateMetadata({
       description: `中位 ${median} · 国内招聘真实数据`,
       type: "article",
       url: `/city/${tier}/${role}`,
+      images: buildOgImages({
+        title: `${tierLabel} ${r.role_name}`,
+        subtitle: tierEntry.cities_in_tier.slice(0, 4).join(" / "),
+        tag: "城市 × 角色",
+        stat1: `${tierEntry.job_count} 条 JD`,
+        stat2: `中位 ${median}`,
+        stat3: `${fmtK(tierEntry.salary.p25)} - ${fmtK(tierEntry.salary.p75)}`,
+      }),
     },
   };
 }

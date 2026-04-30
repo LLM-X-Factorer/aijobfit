@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
     "/api/og/[hash]": [
       "./node_modules/next/dist/compiled/@vercel/og/**/*",
     ],
+    "/api/og/dynamic": [
+      "./node_modules/next/dist/compiled/@vercel/og/**/*",
+    ],
+    "/api/og-square": ["./node_modules/next/dist/compiled/@vercel/og/**/*"],
+    "/api/og-square/[hash]": [
+      "./node_modules/next/dist/compiled/@vercel/og/**/*",
+    ],
   },
 };
 

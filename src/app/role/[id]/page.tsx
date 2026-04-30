@@ -9,6 +9,7 @@ import {
   loadRolesGraduateFriendly,
 } from "@/lib/serverData";
 import { INDUSTRY_EN_TO_CN } from "@/data/industries";
+import { buildOgImages } from "@/lib/ogUrl";
 import type { Skill } from "@/lib/fetchAgentHunt";
 
 const SITE_URL =
@@ -64,6 +65,14 @@ export async function generateMetadata({
       description: `中位 ${median} · 含技能 / 行业 / 城市 / 应届切片`,
       type: "article",
       url: `/role/${id}`,
+      images: buildOgImages({
+        title: role.role_name,
+        subtitle: `国内 AI 招聘画像 · ${role.top_industries.slice(0, 2).map((ti) => INDUSTRY_EN_TO_CN[ti.industry] || ti.industry).join(" / ")}`,
+        tag: "AI 角色画像",
+        stat1: `${role.job_count.toLocaleString()} 条 JD`,
+        stat2: `中位 ${median}`,
+        stat3: `经验 ${role.experience.median_min} 年`,
+      }),
     },
   };
 }

@@ -8,6 +8,7 @@ import {
   loadRolesByIndustry,
 } from "@/lib/serverData";
 import { INDUSTRY_LIST, getIndustry } from "@/data/industries";
+import { buildOgImages } from "@/lib/ogUrl";
 import type {
   Role,
   ProfessionEntry,
@@ -114,6 +115,14 @@ export async function generateMetadata({
       description: `${ind.blurb} · 中位 ${median}`,
       type: "article",
       url: `/industry/${id}`,
+      images: buildOgImages({
+        title: `${ind.cn}行业 AI 求职画像`,
+        subtitle: ind.blurb,
+        tag: "行业切片",
+        stat1: `${jc.toLocaleString()} 条 AI 增强 JD`,
+        stat2: `中位 ${median}`,
+        stat3: "12 行业切片",
+      }),
     },
   };
 }
