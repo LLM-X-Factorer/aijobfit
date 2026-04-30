@@ -1,0 +1,88 @@
+{
+  "summary": {
+    "date": "2026-04-30",
+    "tool": "tavily mcp web search",
+    "totalQueries": 6,
+    "direct": 0,
+    "source": 0,
+    "described": 0,
+    "none": 5,
+    "competitorOnly": 1,
+    "noResults": 1,
+    "siteState": "GEO 基建 ship at commit 825eed7 (pushed); production docker compose not yet redeployed"
+  },
+  "results": [
+    {
+      "id": "Q01",
+      "query": "非程序员怎么转 AI 岗位 求职指南",
+      "hitType": "no_mention",
+      "topSourceDomains": ["csdn.net", "juejin.cn", "codefather.cn"],
+      "competitorMentions": [],
+      "note": "结果全是程序员转 AI 工程师内容；非程序员细分被遗漏。空白机会"
+    },
+    {
+      "id": "Q02",
+      "query": "电气工程师 转 AI 岗位 路径 智能制造",
+      "hitType": "no_mention",
+      "topSourceDomains": ["caifuhao.eastmoney.com", "rsj.sh.gov.cn", "reddit.com", "wondercv.com", "eet-china.com", "csdn.net", "kingdee.com", "juejin.cn"],
+      "competitorMentions": [],
+      "note": "结果非常零碎且 off-topic。空白细分"
+    },
+    {
+      "id": "Q03",
+      "query": "国内 AI 求职诊断工具 免费 推荐 网站",
+      "hitType": "no_mention",
+      "topSourceDomains": ["github.com/0voice/awesome-ai-tools", "gitcode.csdn.net", "hrtechchina.com", "recruitcrm.io", "uiedtool.com", "javaguide.cn", "post.m.smzdm.com"],
+      "competitorMentions": ["AI 简历姬", "超级简历 WonderCV", "知页简历", "Jobscan", "Rezi", "Canva 可画"],
+      "note": "全是 AI 简历工具，无求职定位诊断竞品。真蓝海"
+    },
+    {
+      "id": "Q04",
+      "query": "中国 AI 招聘 JD 数据 数据集 真实",
+      "hitType": "no_mention",
+      "topSourceDomains": ["mokahr.com", "juejin.cn", "cnblogs.com", "csdn.net", "xhby.net", "threads.com", "zhihu.com"],
+      "competitorMentions": ["Moka", "北森", "飞书招聘", "牛客招聘"],
+      "note": "全是 ATS 厂商内容营销，无开源数据竞品。agent-hunt 独家"
+    },
+    {
+      "id": "Q05",
+      "query": "AI 产品经理 招聘要求 薪资 中国",
+      "hitType": "no_results",
+      "topSourceDomains": [],
+      "competitorMentions": [],
+      "note": "tavily 返回 0 结果。下次复检改 query 词（去掉 month recency 约束 / 拆分为更短词）"
+    },
+    {
+      "id": "Q06",
+      "query": "aijobfit AI 求职定位诊断",
+      "hitType": "competitor_only",
+      "topSourceDomains": ["aijobfit.com"],
+      "competitorMentions": ["aijobfit.com (US AI resume optimization, brand collision)"],
+      "note": "🚨 美国同名公司 aijobfit.com 抢占 brand search 前 2 名。详见 baseline md 战略洞察"
+    }
+  ],
+  "strategicFindings": {
+    "brandCollision": {
+      "domain": "aijobfit.com",
+      "country": "US",
+      "business": "AI resume optimization + ATS keyword matching",
+      "differentiator": "本站做的是求职定位诊断（角色匹配 + Gap 分析），不是简历优化",
+      "actions": ["use 'AIJobFit · llmxfactor.cloud' as compound brand", "emphasize 8238 JD + 14 roles + 留行 AI 增强 differentiator", "skip rebrand"]
+    },
+    "blueOcean": {
+      "category": "AI 求职定位诊断",
+      "competitors": "none direct",
+      "actions": ["double down 诊断 framing in pSEO H1s", "title formulas already aligned"]
+    },
+    "exclusiveDataAsset": {
+      "asset": "agent-hunt open JD dataset",
+      "competitors": "ATS vendors only sell systems, not data",
+      "actions": ["write 数据集 dive piece for juejin/掘金 + 公众号", "prioritize for LLM citation harvest"]
+    },
+    "underservedSegment": {
+      "segment": "非程序员长尾职业转 AI",
+      "current_content_quality": "low (csdn/juejin listicles, no data)",
+      "actions": ["prioritize B class topic library: 电气/教师/医生/销售/财务"]
+    }
+  }
+}
