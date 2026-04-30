@@ -5,9 +5,14 @@ import {
   loadRoles,
   loadIndustryAugmentedSalary,
   loadRolesAugmentedByProfession,
+  loadRolesByIndustry,
 } from "@/lib/serverData";
 import { INDUSTRY_LIST, getIndustry } from "@/data/industries";
-import type { Role, ProfessionEntry } from "@/lib/fetchAgentHunt";
+import type {
+  Role,
+  ProfessionEntry,
+  RolesByIndustry,
+} from "@/lib/fetchAgentHunt";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://aijobfit.llmxfactor.cloud";
@@ -24,20 +29,49 @@ function fmtK(n: number): string {
 }
 
 async function loadAll() {
-  const [roles, indSalary, profession] = await Promise.all([
+  const [roles, indSalary, profession, byIndustry] = await Promise.all([
     loadRoles(),
     loadIndustryAugmentedSalary(),
     loadRolesAugmentedByProfession(),
+    loadRolesByIndustry(),
   ]);
-  return { roles, indSalary, profession };
+  return { roles, indSalary, profession, byIndustry };
 }
 
-function rolesInIndustry(roles: Role[], industry: string) {
+// 优先用 roles-by-industry（agent-hunt #9 二维切片）拿原生 vacancyCount + salary
+// + topRegions；远程拉不到时降级到 reverse-lookup top_industries.count。
+function rolesInIndustry(
+  roles: Role[],
+  byIndustry: RolesByIndustry | null,
+  industry: string,
+) {
+  const cell = byIndustry?.data?.domestic?.[industry];
+  if (cell && Object.keys(cell).length > 0) {
+    return Object.entries(cell)
+      .filter(([rid, e]) => rid !== "other" && e.vacancyCount >= 5)
+      .map(([rid, e]) => ({
+        roleId: rid,
+        roleName: e.roleName,
+        countInIndustry: e.vacancyCount,
+        salaryMedian: e.salaryMedian,
+        salarySampleSize: e.salarySampleSize,
+        topRegions: e.topRegions,
+        nationalRole: roles.find((r) => r.role_id === rid),
+      }))
+      .sort((a, b) => b.countInIndustry - a.countInIndustry);
+  }
+  // 兜底：reverse-lookup（旧逻辑）
   return roles
     .filter((r) => r.role_id !== "other")
     .map((r) => ({
-      role: r,
-      countInIndustry: r.top_industries.find((ti) => ti.industry === industry)?.count || 0,
+      roleId: r.role_id,
+      roleName: r.role_name,
+      countInIndustry:
+        r.top_industries.find((ti) => ti.industry === industry)?.count || 0,
+      salaryMedian: r.salary.median,
+      salarySampleSize: r.salary.sample_size,
+      topRegions: [] as string[],
+      nationalRole: r as Role | undefined,
     }))
     .filter((x) => x.countInIndustry > 0)
     .sort((a, b) => b.countInIndustry - a.countInIndustry);
@@ -93,9 +127,9 @@ export default async function IndustryPage({
   const ind = getIndustry(id);
   if (!ind) return notFound();
 
-  const { roles, indSalary, profession } = await loadAll();
+  const { roles, indSalary, profession, byIndustry } = await loadAll();
   const slice = indSalary?.by_industry.find((s) => s.industry === id);
-  const topRoles = rolesInIndustry(roles, id).slice(0, 8);
+  const topRoles = rolesInIndustry(roles, byIndustry, id).slice(0, 8);
   const topProfessions = professionsInIndustry(profession, id).slice(0, 12);
   const cmp = indSalary?.comparison;
 
@@ -198,25 +232,26 @@ export default async function IndustryPage({
       {topRoles.length > 0 && (
         <Section
           title={`${ind.cn}行业 Top AI 角色`}
-          subtitle={`从 14 角色聚类反查，找出该行业开 AI 岗位最多的角色（按 JD 计数排序）`}
+          subtitle="数据来自 roles-by-industry 二维切片（agent-hunt #9）：直接报「该行业 × 该角色」原生 vacancyCount + 中位 + 主战场城市，比反向查找更准"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {topRoles.map(({ role, countInIndustry }) => (
+            {topRoles.map((r) => (
               <Link
-                key={role.role_id}
-                href={`/role/${role.role_id}`}
+                key={r.roleId}
+                href={`/industry/${id}/${r.roleId}`}
                 className="bg-white border border-blue-100 rounded-2xl p-4 hover:shadow-md hover:border-blue-300 transition-all"
               >
                 <div className="flex items-baseline justify-between mb-1">
                   <h3 className="font-bold text-slate-900 text-base">
-                    {role.role_name}
+                    {r.roleName}
                   </h3>
                   <span className="text-xs font-mono text-blue-700 font-bold">
-                    {countInIndustry} JD
+                    {r.countInIndustry} JD
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  全国中位 {fmtK(role.salary.median)} · 经验中位 {role.experience.median_min} 年
+                  中位 {fmtK(r.salaryMedian)}
+                  {r.topRegions.length > 0 && ` · 主战场 ${r.topRegions.slice(0, 2).join(" / ")}`}
                 </p>
               </Link>
             ))}

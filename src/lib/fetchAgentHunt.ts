@@ -216,3 +216,38 @@ export async function fetchRolesGraduateFriendly(): Promise<RolesGraduateFriendl
   }
   return null;
 }
+
+// 行业 × 角色二维切片（agent-hunt #9）。给「教培行业里数据分析师空缺多少 · 中位多少」
+// 这种业务方原话直接落地 SSR pSEO，也升级 industry 页的角色分布从 reverse-lookup 到原生数据。
+export interface RolesByIndustryEntry {
+  roleName: string;
+  vacancyCount: number;
+  salaryMedian: number;
+  salarySampleSize: number;
+  topRegions: string[];
+  lowSample?: boolean; // vacancyCount < lowSampleThreshold(=5) 时上游标记
+}
+
+export interface RolesByIndustry {
+  config: { lowSampleThreshold: number };
+  roleNames: {
+    domestic: Record<string, string>;
+    international: Record<string, string>;
+  };
+  data: {
+    domestic: Record<string, Record<string, RolesByIndustryEntry>>;
+    international: Record<string, Record<string, RolesByIndustryEntry>>;
+  };
+}
+
+export async function fetchRolesByIndustry(): Promise<RolesByIndustry | null> {
+  try {
+    const r = await fetch(`${REMOTE_BASE}/roles-by-industry.json`, {
+      cache: "force-cache",
+    });
+    if (r.ok) return (await r.json()) as RolesByIndustry;
+  } catch {
+    /* swallow */
+  }
+  return null;
+}

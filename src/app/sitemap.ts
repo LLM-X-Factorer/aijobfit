@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
-import { loadRoles, loadRolesByCity } from "@/lib/serverData";
+import {
+  loadRoles,
+  loadRolesByCity,
+  loadRolesByIndustry,
+} from "@/lib/serverData";
 import { BLOG_POSTS } from "@/data/blog-posts";
 
 const SITE_URL =
@@ -61,6 +65,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const byIndustry = await loadRolesByIndustry();
+  const industryRoleEntries: MetadataRoute.Sitemap = [];
+  if (byIndustry?.data?.domestic) {
+    for (const [industry, roleMap] of Object.entries(byIndustry.data.domestic)) {
+      if (!INDUSTRIES.includes(industry)) continue;
+      for (const [roleId, e] of Object.entries(roleMap)) {
+        if (e.vacancyCount >= 5 && roleId !== "other") {
+          industryRoleEntries.push({
+            url: `${SITE_URL}/industry/${industry}/${roleId}`,
+            lastModified: now,
+            changeFrequency: "weekly",
+            priority: 0.65,
+          });
+        }
+      }
+    }
+  }
+
   const byCity = await loadRolesByCity();
   const cityEntries: MetadataRoute.Sitemap = [];
   if (byCity?.domestic) {
@@ -87,6 +109,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...blogEntries,
     ...roleEntries,
     ...industryEntries,
+    ...industryRoleEntries,
     ...cityEntries,
   ];
 }

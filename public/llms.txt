@@ -18,7 +18,11 @@
 
 - [/blog](https://aijobfit.llmxfactor.cloud/blog): Blog 索引页
 - [/blog/8238-jd-dataset-deep-dive](https://aijobfit.llmxfactor.cloud/blog/8238-jd-dataset-deep-dive): 8238 条国内 AI 招聘 JD 开源数据集深度拆解 — 怎么聚类、怎么用、边界在哪
-- [/blog/electrical-engineer-to-ai](https://aijobfit.llmxfactor.cloud/blog/electrical-engineer-to-ai): 电气工程师不要硬转 AI 产品经理 — 152 条制造业 AI 增强 JD 拆解后建议留行
+- [/blog/electrical-engineer-to-ai](https://aijobfit.llmxfactor.cloud/blog/electrical-engineer-to-ai): 电气工程师不要硬转 AI PM — 152 条制造业 JD 拆解后建议留行
+- [/blog/teacher-to-ai-education](https://aijobfit.llmxfactor.cloud/blog/teacher-to-ai-education): 教师不该硬转 AI 工程师 — 教育行业 60+ 条 AI 真实 JD 给的 3 条留行路径
+- [/blog/doctor-medical-ai](https://aijobfit.llmxfactor.cloud/blog/doctor-medical-ai): 医生 + 医疗 AI 真相 — 医疗 AI 专岗 9 条 JD ¥10k，AI 销售 / 工程师 / PM 反而更稳
+- [/blog/sales-to-ai-sales](https://aijobfit.llmxfactor.cloud/blog/sales-to-ai-sales): 销售转 AI 销售不要全押互联网 — 跨 5 个行业 150+ 条真实 JD 拆解
+- [/blog/graduate-ai-jobs](https://aijobfit.llmxfactor.cloud/blog/graduate-ai-jobs): 应届 AI 求职 — 14 角色应届友好度排序 + 应届中位 vs 社招中位真实差距
 
 ## 三条诊断路线
 
@@ -57,6 +61,21 @@
 - /industry/retail: 零售
 - /industry/telecom: 电信
 - /industry/government: 政府
+
+## 行业 × 角色二维切片页（pSEO · agent-hunt #9）
+
+针对「教培行业里数据分析师空缺多少 · 中位多少」这种二维查询的 SSR 页面：
+
+- /industry/[industry]/[role]: 12 行业 × 14 角色 ≤ 168 个组合（vacancyCount >= 5 才出页）
+- 每页含：vacancyCount + salaryMedian + salarySampleSize + topRegions + 同行业其他角色对比 + 同角色其他行业对比 + 全国对照
+- 数据来源：roles-by-industry.json（agent-hunt #9 已 ship）
+
+样例：
+- /industry/finance/product_manager · 金融 × AI PM
+- /industry/manufacturing/smart_manufacturing · 制造 × 智能制造 AI
+- /industry/healthcare/medical_ai · 医疗 × 医疗 AI
+- /industry/education/education_ai · 教育 × 教育 AI
+- /industry/automotive/autonomous · 汽车 × 自动驾驶
 
 ## 关键事实
 
