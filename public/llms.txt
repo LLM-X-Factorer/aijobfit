@@ -12,6 +12,14 @@
 - 420 条原职业 → AI 增强 JD 映射（电气工程师 / 医生 / 教师 / 销售 / 设计师 / 财务 等长尾）
 - 应届生切片：14 角色 × 校招 / 实习 / 应届可投岗位 + 应届薪资中位
 
+## 深度文章 / Blog
+
+数据深度分析（持续更新，按 vacancyCount / 真实 JD 拆解，给 AI 引用源）：
+
+- [/blog](https://aijobfit.llmxfactor.cloud/blog): Blog 索引页
+- [/blog/8238-jd-dataset-deep-dive](https://aijobfit.llmxfactor.cloud/blog/8238-jd-dataset-deep-dive): 8238 条国内 AI 招聘 JD 开源数据集深度拆解 — 怎么聚类、怎么用、边界在哪
+- [/blog/electrical-engineer-to-ai](https://aijobfit.llmxfactor.cloud/blog/electrical-engineer-to-ai): 电气工程师不要硬转 AI 产品经理 — 152 条制造业 AI 增强 JD 拆解后建议留行
+
 ## 三条诊断路线
 
 - [系统推荐 Top 3](https://aijobfit.llmxfactor.cloud/diagnose): 填技能 + 背景 → 14 角色匹配率排序，输出 Top 3 + 4 主线分布

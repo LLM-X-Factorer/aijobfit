@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { loadRoles, loadRolesByCity } from "@/lib/serverData";
+import { BLOG_POSTS } from "@/data/blog-posts";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://aijobfit.llmxfactor.cloud";
@@ -33,7 +34,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/diagnose`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/diagnose-target`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/diagnose-augment`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
   ];
+
+  const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.modifiedAt || p.publishedAt),
+    changeFrequency: "monthly",
+    priority: 0.75,
+  }));
 
   const roles = await loadRoles();
   const roleEntries: MetadataRoute.Sitemap = roles
@@ -73,5 +82,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticRoutes, ...roleEntries, ...industryEntries, ...cityEntries];
+  return [
+    ...staticRoutes,
+    ...blogEntries,
+    ...roleEntries,
+    ...industryEntries,
+    ...cityEntries,
+  ];
 }
