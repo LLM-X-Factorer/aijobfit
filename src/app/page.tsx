@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import TrackOverviewServer from "@/components/TrackOverviewServer";
 import { loadNarrativeStats, loadRoles } from "@/lib/serverData";
+import { BLOG_POSTS, CATEGORY_LABELS } from "@/data/blog-posts";
 
 export const metadata: Metadata = {
   title: "非程序员 AI 求职定位诊断 · 8238 条真实 JD · 14 角色聚类",
@@ -190,38 +191,34 @@ export default async function Home() {
 
       {/* Blog · 深度文章入口 */}
       <section className="px-4 pb-10 sm:pb-12">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
-            深度文章
+            深度文章 · {BLOG_POSTS.length} 篇
           </h2>
           <p className="text-sm text-slate-500 mb-5">
             基于真实 JD 的数据深度分析，永久免费阅读
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <Link
-              href="/blog/electrical-engineer-to-ai"
-              className="bg-white border border-blue-100 rounded-xl px-4 py-3 text-left hover:border-blue-300 hover:shadow-sm transition-all"
-            >
-              <p className="text-xs text-slate-500 font-mono mb-1">2026-04-30 · 留行 + AI 增强</p>
-              <p className="font-bold text-slate-900 text-sm leading-snug">
-                电气工程师不要硬转 AI 产品经理 — 152 条制造业 JD 拆解
-              </p>
-            </Link>
-            <Link
-              href="/blog/8238-jd-dataset-deep-dive"
-              className="bg-white border border-blue-100 rounded-xl px-4 py-3 text-left hover:border-blue-300 hover:shadow-sm transition-all"
-            >
-              <p className="text-xs text-slate-500 font-mono mb-1">2026-04-30 · 数据 · 方法论</p>
-              <p className="font-bold text-slate-900 text-sm leading-snug">
-                8238 条国内 AI 招聘 JD 开源数据集深度拆解
-              </p>
-            </Link>
+            {BLOG_POSTS.slice(0, 4).map((p) => (
+              <Link
+                key={p.slug}
+                href={`/blog/${p.slug}`}
+                className="bg-white border border-blue-100 rounded-xl px-4 py-3 text-left hover:border-blue-300 hover:shadow-sm transition-all"
+              >
+                <p className="text-xs text-slate-500 font-mono mb-1">
+                  {p.publishedAt} · {CATEGORY_LABELS[p.category]}
+                </p>
+                <p className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">
+                  {p.title}
+                </p>
+              </Link>
+            ))}
           </div>
           <Link
             href="/blog"
             className="inline-block text-sm text-blue-600 hover:underline"
           >
-            查看全部 →
+            查看全部 {BLOG_POSTS.length} 篇 →
           </Link>
         </div>
       </section>
