@@ -83,6 +83,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  // Compare pairs: 14 角色（去 other）两两组合，按字母序避免重复
+  const compareEntries: MetadataRoute.Sitemap = [];
+  const compareIds = roles
+    .filter((r) => r.role_id !== "other")
+    .map((r) => r.role_id)
+    .sort();
+  for (let i = 0; i < compareIds.length; i++) {
+    for (let j = i + 1; j < compareIds.length; j++) {
+      compareEntries.push({
+        url: `${SITE_URL}/compare/${compareIds[i]}-vs-${compareIds[j]}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.55,
+      });
+    }
+  }
+
   const byCity = await loadRolesByCity();
   const cityEntries: MetadataRoute.Sitemap = [];
   if (byCity?.domestic) {
@@ -111,5 +128,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...industryEntries,
     ...industryRoleEntries,
     ...cityEntries,
+    ...compareEntries,
   ];
 }

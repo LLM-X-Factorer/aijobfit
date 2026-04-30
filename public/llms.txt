@@ -77,6 +77,20 @@
 - /industry/education/education_ai · 教育 × 教育 AI
 - /industry/automotive/autonomous · 汽车 × 自动驾驶
 
+## 角色对比页（pSEO · 91 组合）
+
+针对「AI PM vs AI 转型咨询哪个好」「AI 运营 vs AI 销售」类 long-tail query：
+
+- /compare/[role-a]-vs-[role-b]: 14 角色两两组合（字母序 a < b 去重），共 91 个 SSG 页
+- 每页：双栏数据卡 + 4 维度横条对比（JD 数 / 中位 / P75 / 经验）+ 必备技能对比 + 行业对比 + 决策路径
+
+样例：
+- /compare/ai_engineer-vs-product_manager · AI 工程师 vs AI PM
+- /compare/ai_transformation-vs-product_manager · AI 转型咨询 vs AI PM
+- /compare/operations-vs-sales_bd · AI 运营 vs AI 销售
+- /compare/ai_engineer-vs-algorithm · AI 工程师 vs 算法工程师
+- /compare/medical_ai-vs-education_ai · 医疗 AI vs 教育 AI
+
 ## 关键事实
 
 - 数据来源：[Agent Hunt](https://github.com/LLM-X-Factorer/agent-hunt)（开源仓库，每周更新）
