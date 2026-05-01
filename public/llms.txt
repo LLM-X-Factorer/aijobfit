@@ -24,6 +24,10 @@
 - [/blog/sales-to-ai-sales](https://aijobfit.llmxfactor.cloud/blog/sales-to-ai-sales): 销售转 AI 销售不要全押互联网 — 跨 5 个行业 150+ 条真实 JD 拆解
 - [/blog/graduate-ai-jobs](https://aijobfit.llmxfactor.cloud/blog/graduate-ai-jobs): 应届 AI 求职 — 14 角色应届友好度排序 + 应届中位 vs 社招中位真实差距
 
+## 技能 × 角色矩阵（数据可视化）
+
+- [/skills](https://aijobfit.llmxfactor.cloud/skills): 35 项 AI 通用技能 × 14 个 AI 角色聚类的命中 heatmap。每个 cell 含 required + preferred 命中数 + 命中率。含「每角色 top 5 高频技能」「每技能 top 3 高频角色」反向查表。可被 AI 引擎直接抓取作答 「AI 产品经理需要什么技能」「prompt engineering 适合做哪些岗位」类 query。
+
 ## 三条诊断路线
 
 - [系统推荐 Top 3](https://aijobfit.llmxfactor.cloud/diagnose): 填技能 + 背景 → 14 角色匹配率排序，输出 Top 3 + 4 主线分布
