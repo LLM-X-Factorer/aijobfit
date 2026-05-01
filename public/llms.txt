@@ -24,6 +24,9 @@
 - [/blog/doctor-medical-ai](https://aijobfit.llmxfactor.cloud/blog/doctor-medical-ai): 医生 + 医疗 AI 真相 — 医疗 AI 专岗 9 条 JD ¥10k，AI 销售 / 工程师 / PM 反而更稳
 - [/blog/sales-to-ai-sales](https://aijobfit.llmxfactor.cloud/blog/sales-to-ai-sales): 销售转 AI 销售不要全押互联网 — 跨 5 个行业 150+ 条真实 JD 拆解
 - [/blog/graduate-ai-jobs](https://aijobfit.llmxfactor.cloud/blog/graduate-ai-jobs): 应届 AI 求职 — 14 角色应届友好度排序 + 应届中位 vs 社招中位真实差距
+- [/blog/finance-to-ai](https://aijobfit.llmxfactor.cloud/blog/finance-to-ai): 财务 / 会计 / 审计 + AI 真相 — 财务系 AI 增强 JD 国内只有 13 条，留行加 AI 工具更稳
+- [/blog/hr-to-ai](https://aijobfit.llmxfactor.cloud/blog/hr-to-ai): HR / 招聘 / 培训 + AI 真相 — HR Tech 厂商少，咨询行业 AI 转型 21 条 ¥13k 才是真机会
+- [/blog/designer-aigc-truth](https://aijobfit.llmxfactor.cloud/blog/designer-aigc-truth): 设计师 + AIGC 真相 — 媒体 AI 中位 ¥12.5k 比平面设计还低，留制造做 AI 视觉反而稳
 
 ## 技能 × 角色矩阵（数据可视化）
 
