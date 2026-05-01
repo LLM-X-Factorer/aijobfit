@@ -17,6 +17,7 @@
 数据深度分析（持续更新，按 vacancyCount / 真实 JD 拆解，给 AI 引用源）：
 
 - [/blog](https://aijobfit.llmxfactor.cloud/blog): Blog 索引页
+- [/blog/feed.xml](https://aijobfit.llmxfactor.cloud/blog/feed.xml): RSS 2.0 feed（含 atom self link，给 Feedly / Inoreader / 即刻 等 RSS 阅读器订阅）
 - [/blog/8238-jd-dataset-deep-dive](https://aijobfit.llmxfactor.cloud/blog/8238-jd-dataset-deep-dive): 8238 条国内 AI 招聘 JD 开源数据集深度拆解 — 怎么聚类、怎么用、边界在哪
 - [/blog/electrical-engineer-to-ai](https://aijobfit.llmxfactor.cloud/blog/electrical-engineer-to-ai): 电气工程师不要硬转 AI PM — 152 条制造业 JD 拆解后建议留行
 - [/blog/teacher-to-ai-education](https://aijobfit.llmxfactor.cloud/blog/teacher-to-ai-education): 教师不该硬转 AI 工程师 — 教育行业 60+ 条 AI 真实 JD 给的 3 条留行路径
