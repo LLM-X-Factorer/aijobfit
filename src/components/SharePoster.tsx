@@ -362,6 +362,10 @@ export default function SharePoster({ report }: { report: Report }) {
           <p className="text-xs text-white/60 mb-3">
             长按图片保存 · 或点击下方按钮下载
           </p>
+          {/* posterUrl 是 canvas.toDataURL 生成的 data URL（base64 PNG）。
+              next/image 不支持 data URL src，且需要保留长按保存到相册的微信生态体验，
+              所以保留 native <img>。 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={posterUrl}
             alt="AIJobFit 分享海报"
