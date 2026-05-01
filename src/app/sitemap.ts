@@ -39,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/diagnose-target`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/diagnose-augment`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE_URL}/skills`, lastModified: now, changeFrequency: "weekly", priority: 0.75 },
   ];
 
   const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
