@@ -159,6 +159,19 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 - **5 主线 TrackOverview**：`commit 42e07d1` —— 加 E 主线为 5th 卡片，server wrapper 动态算 jdCount/medianSalary/professionCount，emerald 视觉差异化，每张卡片底部 CTA；TRANSITION_TRACKS 防 E 污染 4 主线 trackScores
 - **主线指纹扫描**：`commit 894d4d2` —— role 级 trackFingerprint（reasoning 解释因果）+ cover 级 trackFingerprints 扫描（独立于 trackScores，解决 D 主线 roleIds=other 永远 0% 的可见性老 bug + 业务方「我会剪映就推 AIGC？」黑盒疑虑）
 
+### GEO 基建 + 内容扩张（2026-04-30 / 05-01）
+
+站内 GEO + pSEO + 自媒体工作流 ship。生产规模 224 个 static page。
+
+- **AI crawler 站点信号**：`commits a437f93 / 825eed7 / 7ddc2d9` —— `robots.txt` allow 19 个 LLM crawler（GPTBot / ClaudeBot / PerplexityBot / Google-Extended / Bytespider 等）+ `sitemap.xml`（218 URL）+ `llms.txt`（llmstxt.org 标准）
+- **JSON-LD 全套**：layout 注入 Organization + WebSite + Dataset；首页 FAQPage（8 Q&A）；每个 pSEO 页 Article + Breadcrumb LD
+- **pSEO 路由**：14 `/role/[id]` + 12 `/industry/[id]` + 25 `/city/[tier]/[role]` + 65 `/industry/[id]/[role]`（agent-hunt #9 二维切片，commit `23e1d34`）+ 91 `/compare/[a]-vs-[b]` 角色对比（commit `8155524`）
+- **Blog 系统**：`commits bf3948c / 017fd10` —— PostShell + 6 篇文章（数据集深度拆解 / 电气工程师 / 教师 / 医生 / 销售 / 应届生），首页 dynamic blog section
+- **动态 OG**：`commit 7ddc2d9` —— `/api/og/dynamic` 接 query string 渲染 1200×630 + 800×800（微信方形），6 类 pSEO 页面 metadata 接入数据锚点
+- **GSC 验证 + sitemap 提交**：`commit f3d8f24` —— Google Search Console verification meta tag，sitemap 已提交（127 discovered pages，Status: Success）
+- **marketing/ 脚手架**：`commit c1de474` —— topics 选题库 + xhs/wechat 标题公式 + ai-mentions queries + baseline-2026-04-30 + check-ai-mentions.ts 脚本骨架
+- **Ops 指南**：`marketing/ops-guide.md` —— 腾讯云部署 + GSC/百度/Bing sitemap 提交 + 监测节奏 + 紧急回滚
+
 ### 工程基建
 
 - **CI**：GitHub Actions lint + tsc + build
@@ -171,16 +184,24 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 
 ## 剩余 open issue
 
-依赖 agent-hunt 数据：
-- **agent-hunt#9 行业 × 角色二维切片**：业务方原话「教培行业里数据分析师空缺多少 · 中位数多少」直接卡这里。aijobfit 这边 cover.industryContext 当前是「行业总 AI 增强 JD」，等 #9 ship 后 30 分钟可升级到「教育行业 PM 14 条 JD · 中位 ¥25k · sampleTitles」
+依赖 agent-hunt 数据（supply 端等待）：
 - **agent-hunt#11 应届生切片二期**：`roles-graduate-friendly.json` 已 ship 14 角色（aijobfit 已接入），但 augmentSkills 应届版 / `applicantSignal` 等待 supply-side 数据
 - **agent-hunt#10 augmentSkills 提取质量**：产品经理只有 2 个 augmentSkills（computer_vision + llm 各 count=1），影响 Route C readiness 档位精度
 
-非代码：
-- 测试 · 微信实机全链路（手机微信扫 QR → 加好友 → 拿激活码）
-- 数据 · 漏斗埋点观察期 + 门槛调优决策
+aijobfit 仓库 GitHub OPEN issue（5-01 同步）：
+- **#13 微信生态实机全链路测试**：手机微信扫 QR → 加好友 → 拿激活码（用户手动测）
+- **#14 漏斗埋点观察期 + 门槛调优**
+- **#30 HowTo schema for /diagnose-* 三路线**：让 AI 引用「如何做 AI 求职诊断」时召回我们
+- **#31 /skills 36 技能 × 14 角色 heatmap 可视化页**
+- **#32 RSS feed for /blog**
+- **#33 更多 blog 题材（财务 / HR / 设计师 / 零售 / 反贩卖焦虑）**
+- **#34 修 AssistantQR + SharePoster `<img>` LCP warning（next/image）**
+
+非代码（持续观察）：
+- GSC 收录数据观察期：5-01 sitemap 提交 127 URL，1-7 天后看抓取，1 周后跑第一次 AI 引用复检（同 baseline-2026-04-30 6 query）
+- AI 引用监测每月跑 `marketing/scripts/check-ai-mentions.ts`（需 PERPLEXITY_API_KEY）
 - 视觉 · 业务方实测后的 UX 反馈再迭代
 
 ## 历史已关闭 issue
 
-#1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B 上线 · #18 whyMatched · #20 主线透明化 · #21 报告兜底 CTA · #16 应届生（前端 + 文案部分 + 数据切片接入）· #17 5 主线 E 落地 · 业务方反馈 P0/P1/P2 重构（2026-04-29 → 04-30）
+#1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B · #16 应届生 · #17 5 主线 E · #18 whyMatched · #19 行业 × 岗位维度 · #20 主线透明化 · #21 报告兜底 CTA · 业务方反馈 P0/P1/P2 重构（2026-04-29 → 04-30）· agent-hunt#9 行业 × 角色二维切片（aijobfit 接入 5-01，commit `23e1d34`）
