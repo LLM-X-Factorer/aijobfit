@@ -159,11 +159,11 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 - **5 主线 TrackOverview**：`commit 42e07d1` —— 加 E 主线为 5th 卡片，server wrapper 动态算 jdCount/medianSalary/professionCount，emerald 视觉差异化，每张卡片底部 CTA；TRANSITION_TRACKS 防 E 污染 4 主线 trackScores
 - **主线指纹扫描**：`commit 894d4d2` —— role 级 trackFingerprint（reasoning 解释因果）+ cover 级 trackFingerprints 扫描（独立于 trackScores，解决 D 主线 roleIds=other 永远 0% 的可见性老 bug + 业务方「我会剪映就推 AIGC？」黑盒疑虑）
 
-### GEO 基建 + 内容扩张（2026-04-30 / 05-01）
+### GEO 一期：基建 + 内容扩张（2026-04-30）
 
-站内 GEO + pSEO + 自媒体工作流 ship。生产规模 224 个 static page。
+站内 GEO + pSEO + 自媒体工作流 ship。
 
-- **AI crawler 站点信号**：`commits a437f93 / 825eed7 / 7ddc2d9` —— `robots.txt` allow 19 个 LLM crawler（GPTBot / ClaudeBot / PerplexityBot / Google-Extended / Bytespider 等）+ `sitemap.xml`（218 URL）+ `llms.txt`（llmstxt.org 标准）
+- **AI crawler 站点信号**：`commits a437f93 / 825eed7 / 7ddc2d9` —— `robots.txt` allow 19 个 LLM crawler（GPTBot / ClaudeBot / PerplexityBot / Google-Extended / Bytespider 等）+ `sitemap.xml`（一期 218 URL）+ `llms.txt`（llmstxt.org 标准）
 - **JSON-LD 全套**：layout 注入 Organization + WebSite + Dataset；首页 FAQPage（8 Q&A）；每个 pSEO 页 Article + Breadcrumb LD
 - **pSEO 路由**：14 `/role/[id]` + 12 `/industry/[id]` + 25 `/city/[tier]/[role]` + 65 `/industry/[id]/[role]`（agent-hunt #9 二维切片，commit `23e1d34`）+ 91 `/compare/[a]-vs-[b]` 角色对比（commit `8155524`）
 - **Blog 系统**：`commits bf3948c / 017fd10` —— PostShell + 6 篇文章（数据集深度拆解 / 电气工程师 / 教师 / 医生 / 销售 / 应届生），首页 dynamic blog section
@@ -171,6 +171,17 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 - **GSC 验证 + sitemap 提交**：`commit f3d8f24` —— Google Search Console verification meta tag，sitemap 已提交（127 discovered pages，Status: Success）
 - **marketing/ 脚手架**：`commit c1de474` —— topics 选题库 + xhs/wechat 标题公式 + ai-mentions queries + baseline-2026-04-30 + check-ai-mentions.ts 脚本骨架
 - **Ops 指南**：`marketing/ops-guide.md` —— 腾讯云部署 + GSC/百度/Bing sitemap 提交 + 监测节奏 + 紧急回滚
+
+### GEO 二期：HowTo schema + skills heatmap + RSS + 3 篇 augment blog（2026-05-01）
+
+ship 后生产规模 228 个 static page + RSS feed，sitemap 222 URL。GSC 已 5/1 重新提交 + 4 priority URL Request Indexing。
+
+- **HowTo JSON-LD 三路线**（PR #35 closes #30）—— `/diagnose` / `/diagnose-target` / `/diagnose-augment` 各注入一段 HowTo schema（3 步 + supplies + image），让 AI 在「如何做 AI 求职诊断」类 query 时召回；同时给 3 个 page 加 per-page metadata（title / description / canonical）
+- **/skills 35 技能 × 14 角色 heatmap**（PR #36 closes #31）—— 全 SVG SSR（无 client JS，928×1120），cell 颜色 6 档命中率，链接 `/role/[id]?skill=[id]`；含反向查表（每角色 top 5 / 每技能 top 3）+ Article + Dataset JSON-LD；解了一个 Next 16 / React 19 SVG `<title>` JSX 多片段插值的隐藏 bug（用模板字符串绕开）
+- **RSS 2.0 feed**（PR #37 closes #32）—— `/blog/feed.xml` 静态路由（force-static + 1h revalidate + atom self link），category 去重 label + tags；layout `<body>` 注入 alternate link 让全站任何页面都能被 RSS reader 自动发现 feed（试过 metadata.alternates.types 但被 page 级 alternates 覆盖）
+- **3 篇新 blog**（PR #38 closes #33 top-3 候选）—— `/blog/finance-to-ai`（财务 13 条 AI 增强 JD ¥8-10k vs 金融行业 85 条 ¥30k 但前 3 名是算法/PM/工程师对财务不开口）/ `/blog/hr-to-ai`（HR 系 5-7 条 + 咨询 AI 转型 21 条 ¥13k 才是真机会）/ `/blog/designer-aigc-truth`（媒体 AI 整体 ¥12.5k 比平面设计 ¥18.75k 还低，留制造做 AI 视觉反而稳）
+- **GSC 自动化**：sitemap 重新提交 + 4 个 priority URL（/skills + 3 blog）逐个 Request Indexing 全部加入优先抓取队列；用 chrome-devtools computer-use 自动完成
+- **分发草稿**：`marketing/distribution-2026-05-01.md` —— 4 天 rollout 排期（5/2 财务 → 5/3 设计师 → 5/4 /skills → 5/5 HR）+ 每页面 3-4 候选小红书标题 + 200-260 字 body + 公众号标题 + 知乎主动答 query 清单 + 视觉素材 + 跟踪指标
 
 ### 工程基建
 
@@ -188,20 +199,19 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 - **agent-hunt#11 应届生切片二期**：`roles-graduate-friendly.json` 已 ship 14 角色（aijobfit 已接入），但 augmentSkills 应届版 / `applicantSignal` 等待 supply-side 数据
 - **agent-hunt#10 augmentSkills 提取质量**：产品经理只有 2 个 augmentSkills（computer_vision + llm 各 count=1），影响 Route C readiness 档位精度
 
-aijobfit 仓库 GitHub OPEN issue（5-01 同步）：
+aijobfit 仓库 GitHub OPEN issue（5-01 二期 ship 后同步）：
 - **#13 微信生态实机全链路测试**：手机微信扫 QR → 加好友 → 拿激活码（用户手动测）
 - **#14 漏斗埋点观察期 + 门槛调优**
-- **#30 HowTo schema for /diagnose-* 三路线**：让 AI 引用「如何做 AI 求职诊断」时召回我们
-- **#31 /skills 36 技能 × 14 角色 heatmap 可视化页**
-- **#32 RSS feed for /blog**
-- **#33 更多 blog 题材（财务 / HR / 设计师 / 零售 / 反贩卖焦虑）**
-- **#34 修 AssistantQR + SharePoster `<img>` LCP warning（next/image）**
+- **#39 提交 sitemap 到百度 / Bing / 360 / 搜狗**（GSC 已完成）
+- **#40 4 天排期发布 5/1 batch**（小红书 / 知乎 / 公众号，按 `marketing/distribution-2026-05-01.md`）
+- **#41 5/8 GSC soak check**：4 priority URL 抓取状态 + site: 收录数 + 6-baseline AI-mention 复检（已配自动 routine `trig_014fge7MQLHZs5mLB5yFdH4E`，5/8 02:00 UTC 触发，结果自动 post 到 issue 评论）
+- **#42 #33 残留 2/5 候选**：零售门店 + AI / 反贩卖焦虑系列（低优先，等 5/1 batch 数据出来再决定要不要继续）
 
 非代码（持续观察）：
-- GSC 收录数据观察期：5-01 sitemap 提交 127 URL，1-7 天后看抓取，1 周后跑第一次 AI 引用复检（同 baseline-2026-04-30 6 query）
+- GSC 收录数据观察期：5/1 重新提交 sitemap + 4 priority URL 加 priority queue，5/8 自动 routine 复检
 - AI 引用监测每月跑 `marketing/scripts/check-ai-mentions.ts`（需 PERPLEXITY_API_KEY）
 - 视觉 · 业务方实测后的 UX 反馈再迭代
 
 ## 历史已关闭 issue
 
-#1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B · #16 应届生 · #17 5 主线 E · #18 whyMatched · #19 行业 × 岗位维度 · #20 主线透明化 · #21 报告兜底 CTA · 业务方反馈 P0/P1/P2 重构（2026-04-29 → 04-30）· agent-hunt#9 行业 × 角色二维切片（aijobfit 接入 5-01，commit `23e1d34`）
+#1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B · #16 应届生 · #17 5 主线 E · #18 whyMatched · #19 行业 × 岗位维度 · #20 主线透明化 · #21 报告兜底 CTA · 业务方反馈 P0/P1/P2 重构（2026-04-29 → 04-30）· agent-hunt#9 行业 × 角色二维切片（aijobfit 接入 5-01，commit `23e1d34`）· **GEO 二期（2026-05-01）**: #30 HowTo schema 三路线 / #31 /skills heatmap / #32 RSS feed / #33 更多 blog 题材（top-3 候选 finance/HR/designer 已 ship，2/5 残留候选移到 #42）/ #34 LCP warning
