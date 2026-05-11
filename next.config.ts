@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
     "/api/og-square/[hash]": ["./node_modules/next/dist/compiled/@vercel/og/**/*"],
     "/api/track": ["./node_modules/better-sqlite3/**/*"],
     "/api/submit": ["./node_modules/better-sqlite3/**/*"],
+    "/api/admin/export": ["./node_modules/better-sqlite3/**/*"],
   },
 };
 
