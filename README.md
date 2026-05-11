@@ -54,6 +54,7 @@ A AI PM / B AI 运营 / C AI 转型咨询 / D AIGC 创意（A-D 是「转行」�
 - **Blog 系统**：`/blog` + `/blog/[slug]` 站内深度文章（PostShell + Article LD + 三路线 CTA），9 篇覆盖数据集深度 / 电气 / 教师 / 医生 / 销售 / 应届生 / 财务 / HR / 设计师
 - **HowTo schema**：`/diagnose` / `/diagnose-target` / `/diagnose-augment` 三路线注入 HowTo JSON-LD，让 AI 引擎在「如何做 AI 求职诊断」类 query 时召回
 - **漏斗埋点**：form_submit / route_b_submit / route_c_submit / report_view / report_reject_top3_click / report_b_reselect_target_click / report_b_switch_to_a_click / report_a_to_c_click / report_b_to_c_click / report_c_to_b_click / report_c_to_a_click / mask_see / code_enter_{success,fail}
+- **用户行为分析（L1+L2）**：每次表单提交和埋点事件持久化到 SQLite（`events` + `submissions` 两张表）；UUID per browser（localStorage，无需登录）；audience 自动推断；数据导出见 Docker 部署节
 - **CI 绿**：GitHub Actions 跑 lint + tsc + build
 
 ## Tech Stack
@@ -63,6 +64,7 @@ A AI PM / B AI 运营 / C AI 转型咨询 / D AIGC 创意（A-D 是「转行」�
 - **OG:** `@vercel/og` 动态生成，中文字体 `public/fonts/` 本地优先 + `fonts.googleapis.cn` fallback
 - **Share poster:** 客户端 Canvas 画 1080×1920 竖版
 - **Deployment:** Docker + Nginx + certbot SSL（腾讯云 Lighthouse）
+- **Analytics:** Node.js built-in `node:sqlite`（无 native addon，数据存 Docker volume `/data/aijobfit/analytics.db`）
 
 ## Getting Started
 
@@ -90,6 +92,17 @@ docker compose up -d --build
 
 `NEXT_PUBLIC_SITE_URL` 在 `docker-compose.yml` 的 `build.args` 注入，让客户端 bundle 的 QR、metadata、OG 绝对 URL 都指向生产域名。
 
+**数据分析导出**（需先部署并挂载 volume）：
+
+| 导出内容 | URL |
+|---|---|
+| 表单提交记录（CSV） | `https://aijobfit.llmxfactor.cloud/api/admin/export?token=aijobfit-admin-2026&table=submissions` |
+| 事件流水（CSV） | `https://aijobfit.llmxfactor.cloud/api/admin/export?token=aijobfit-admin-2026&table=events` |
+| JSON 格式 | 加 `&fmt=json` |
+| 按时间过滤 | 加 `&since=<unix_ms>` |
+
+> 生产建议通过 `DATA_ADMIN_TOKEN` 环境变量覆盖默认 token。
+
 ## 项目结构
 
 ```
@@ -108,6 +121,9 @@ src/
       og/dynamic/route.tsx                pSEO 通用动态 OG（query string，1200×630 + 800×800 双尺寸 + blue/emerald 主题）
       og-square/route.tsx                 站点级方形 OG 800×800（微信）
       og-square/[hash]/route.tsx          报告动态方形 OG（按 route 切 label）
+      track/route.ts                      L1 事件持久化（POST uuid+event_type+route+extra）
+      submit/route.ts                     L2 表单提交持久化（POST 含 audience 自动推断）
+      admin/export/route.ts               数据导出（GET ?token&table&fmt&limit&since，token 保护）
     role/[id]/page.tsx                    14 个 SSG 角色画像（必备/优选技能 + 行业 × AI 增强薪资 + 一线/新一线对照 + 应届口径 + Article LD）
     industry/[id]/page.tsx                12 个 SSG 行业切片（vs 互联网薪资 + Top AI 角色 + 常见原职业导流 Route C）
     industry/[id]/[role]/page.tsx         65 个 SSG 二维切片（agent-hunt #9：行业 × 角色 vacancyCount + topRegions + 同行业其他角色对比）
@@ -140,6 +156,8 @@ src/
     reportGen.ts                          7 节报告生成（A/B/C 三分发 + industry slice + achievement rate + city tier + grad slice + fingerprint scan）
     audience.ts                           fresh-grad / social 推断
     track.ts                              漏斗埋点
+    uuid.ts                               UUID 生成 / 读取（localStorage，SSR safe）
+    db.ts                                 node:sqlite 单例 + 建表（events / submissions）
     useragent.ts                          isWeChat / isMobile
     ogFont.ts                             字体加载
     fetchAgentHunt.ts                     7 个 endpoint 客户端 fetcher（远程优先）

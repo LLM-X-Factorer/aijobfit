@@ -70,7 +70,9 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
   - 兜底：路线 A 当所有匹配为 0 时把 targetTrack 锚点角色 hoist 到 Top 1，`meta.isFallback`；路线 C 当 originProfession 无匹配时同样 isFallback
 - `src/lib/audience.ts` — `fresh-grad / social` 受众推断
 - `src/lib/encoding.ts` — base64url 编码 UserInput。`route?: "A" | "B" | "C"`，`targetRoleId?`（B），`originProfession?`（C）
-- `src/lib/track.ts` — 漏斗埋点
+- `src/lib/track.ts` — 漏斗埋点；同时 POST 到 `/api/track` server-side（fire-and-forget）
+- `src/lib/uuid.ts` — 客户端 UUID 生成（`aijobfit_uid` localStorage key），SSR-safe
+- `src/lib/db.ts` — `node:sqlite` 单例（`DatabaseSync`）+ 建表 `events` / `submissions`；路径由 `DATA_DIR` env 控制（默认 `./data`，生产 `/data`）
 - `src/lib/useragent.ts` — `isWeChat()` / `isMobile()` SSR-safe
 - `src/lib/ogFont.ts` — OG 图字体加载
 
@@ -100,6 +102,9 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 - `src/app/result/[hash]/page.tsx` + `ReportClient.tsx` — server metadata 同时给 1200×630 + 800×800 OG；client pre-fetch 7 个 endpoint；底部按 route 渲染跨路线 CTA（A→B/C，B→B/C/A 三选，C→B/A 二选）
 - `src/app/api/og/route.tsx` / `og-square/route.tsx` — 静态 OG（英文，5000+ JD floor）
 - `src/app/api/og/[hash]/route.tsx` / `og-square/[hash]/route.tsx` — 动态 OG，server load 全部数据后调 generateReport
+- `src/app/api/track/route.ts` — L1 事件写入（POST `{uuid, event_type, route, extra}`）
+- `src/app/api/submit/route.ts` — L2 表单提交写入（POST 含 audience 自动推断；DiagnosisForm A/B/C 在 submit 时 fire-and-forget 调用）
+- `src/app/api/admin/export/route.ts` — 数据导出（GET `?token&table=submissions|events&fmt=csv|json&limit&since`；token 由 `DATA_ADMIN_TOKEN` env 控制，默认 `aijobfit-admin-2026`）
 - `.github/workflows/ci.yml` — push/PR → npm ci → lint → tsc → build
 
 ## Design Principles
@@ -182,6 +187,17 @@ ship 后生产规模 228 个 static page + RSS feed，sitemap 222 URL。GSC 已 
 - **3 篇新 blog**（PR #38 closes #33 top-3 候选）—— `/blog/finance-to-ai`（财务 13 条 AI 增强 JD ¥8-10k vs 金融行业 85 条 ¥30k 但前 3 名是算法/PM/工程师对财务不开口）/ `/blog/hr-to-ai`（HR 系 5-7 条 + 咨询 AI 转型 21 条 ¥13k 才是真机会）/ `/blog/designer-aigc-truth`（媒体 AI 整体 ¥12.5k 比平面设计 ¥18.75k 还低，留制造做 AI 视觉反而稳）
 - **GSC 自动化**：sitemap 重新提交 + 4 个 priority URL（/skills + 3 blog）逐个 Request Indexing 全部加入优先抓取队列；用 chrome-devtools computer-use 自动完成
 - **分发草稿**：`marketing/distribution-2026-05-01.md` —— 4 天 rollout 排期（5/2 财务 → 5/3 设计师 → 5/4 /skills → 5/5 HR）+ 每页面 3-4 候选小红书标题 + 200-260 字 body + 公众号标题 + 知乎主动答 query 清单 + 视觉素材 + 跟踪指标
+
+### 用户行为分析（v0.5.0，2026-05-11）
+
+匿名 L1 事件 + L2 表单提交持久化，用于用户画像数据飞轮。
+
+- **UUID**：客户端 `crypto.randomUUID()` 存 localStorage `aijobfit_uid`，无需登录，同 UUID 可追踪跨路线行为
+- **L1 `/api/track`**：所有漏斗埋点事件同步 POST 到服务端，写 `events` 表（uuid / ts / event_type / route / extra JSON）
+- **L2 `/api/submit`**：三路线 Form 在 submit 时 fire-and-forget POST，写 `submissions` 表（route / skills / years_exp / education / city / industry / target_role_id / origin_profession / report_hash / duration_ms / audience 自动推断）
+- **存储**：`node:sqlite` Node.js 22 内置模块（无 native addon），DB 文件挂 Docker volume `/data/aijobfit/analytics.db`；`DATA_DIR` env 控制路径
+- **数据导出**：`GET /api/admin/export?token=<DATA_ADMIN_TOKEN>&table=submissions|events&fmt=csv|json&limit=N&since=<ts_ms>`；token 默认 `aijobfit-admin-2026`，生产建议通过 env 覆盖
+- **Dockerfile fix**：`CMD ["node", "--experimental-sqlite", "server.js"]`（兼容 Node 22.5-22.11）
 
 ### 工程基建
 
