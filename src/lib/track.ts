@@ -1,7 +1,9 @@
 // 最小漏斗埋点。
-// 初期 sink: console.log（dev） + localStorage ring buffer（上限 50 条，便于线上调试）。
+// Sink: console.log（dev） + localStorage ring buffer（上限 50 条）+ /api/track 服务端持久化。
 // 如设置 NEXT_PUBLIC_PLAUSIBLE_DOMAIN 且 window.plausible 可用，则同步上报。
 // 不引第三方 SDK，不影响 bundle。
+
+import { getOrCreateUuid } from "@/lib/uuid";
 
 const STORAGE_KEY = "aijobfit_events";
 const MAX_EVENTS = 50;
@@ -41,6 +43,15 @@ export function track(name: string, props?: EventProps): void {
 
   if (window.plausible) {
     window.plausible(name, props ? { props } : undefined);
+  }
+
+  const uuid = getOrCreateUuid();
+  if (uuid) {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uuid, event_type: name, route: props?.route, extra: props }),
+    }).catch(() => undefined);
   }
 }
 

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FORM_FIELDS } from "@/data/form-fields";
 import { decodeInput, encodeInput, UserInput } from "@/lib/encoding";
 import { track } from "@/lib/track";
+import { getOrCreateUuid } from "@/lib/uuid";
 import { fetchRolesAugmentedByProfession, RolesAugmentedByProfession } from "@/lib/fetchAgentHunt";
 import { matchProfession } from "@/lib/professionMatch";
 import { FormFieldRender } from "@/components/FormFieldRender";
@@ -151,14 +152,31 @@ export default function DiagnosisFormC() {
       }
     }
     const hash = encodeInput(input);
+    const duration_ms = Date.now() - startedAtRef.current;
     track("route_c_submit", {
-      duration_ms: Date.now() - startedAtRef.current,
+      duration_ms,
       origin_profession: origProf,
       matched_key: matchPreview?.best?.matchedKey ?? undefined,
       match_type: matchPreview?.best?.matchType ?? "no-match",
       industry,
       skills_count: input.skills.length,
     });
+    fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uuid: getOrCreateUuid(),
+        route: "C",
+        skills: input.skills,
+        years_exp: input.yearsExp,
+        education: input.education,
+        city: input.city,
+        industry: industry || null,
+        origin_profession: origProf,
+        report_hash: hash,
+        duration_ms,
+      }),
+    }).catch(() => undefined);
     router.push(`/result/${hash}`);
   }
 

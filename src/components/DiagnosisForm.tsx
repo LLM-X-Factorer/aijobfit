@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FORM_FIELDS, STEP_TITLES } from "@/data/form-fields";
 import { decodeInput, encodeInput, UserInput } from "@/lib/encoding";
 import { track } from "@/lib/track";
+import { getOrCreateUuid } from "@/lib/uuid";
 import { FormFieldRender } from "@/components/FormFieldRender";
 
 type FormState = Record<string, string | string[] | number>;
@@ -121,17 +122,33 @@ export default function DiagnosisForm() {
       }
     }
     const hash = encodeInput(input);
+    // eslint-disable-next-line react-hooks/purity
+    const duration_ms = Date.now() - startedAtRef.current;
     const filledCount = Object.values(state).filter((v) =>
       Array.isArray(v) ? v.length > 0 : v !== "" && v != null,
     ).length;
     track("form_submit", {
-      // Event handler scope; React 19 rule false-positive on impure calls here
-      // eslint-disable-next-line react-hooks/purity
-      duration_ms: Date.now() - startedAtRef.current,
+      duration_ms,
       filled_fields: filledCount,
       skills_count: (input.skills || []).length,
       target_tracks: (input.targetTrack || []).join(","),
     });
+    fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uuid: getOrCreateUuid(),
+        route: "A",
+        skills: input.skills,
+        years_exp: input.yearsExp,
+        education: input.education,
+        city: input.city,
+        industry: (input.industry ?? [])[0] ?? null,
+        target_track: input.targetTrack,
+        report_hash: hash,
+        duration_ms,
+      }),
+    }).catch(() => undefined);
     router.push(`/result/${hash}`);
   }
 

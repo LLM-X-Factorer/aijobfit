@@ -39,5 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local analytics db (production data lives in Docker volume)
+/data/
 .playwright-mcp/
 qr-locked-sections.png

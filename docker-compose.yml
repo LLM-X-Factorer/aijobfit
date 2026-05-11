@@ -8,3 +8,7 @@ services:
     restart: unless-stopped
     ports:
       - "3004:3000"
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - /data/aijobfit:/data

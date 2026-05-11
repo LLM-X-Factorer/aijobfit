@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FORM_FIELDS } from "@/data/form-fields";
 import { decodeInput, encodeInput, UserInput } from "@/lib/encoding";
 import { track } from "@/lib/track";
+import { getOrCreateUuid } from "@/lib/uuid";
 import { fetchRoles, Role } from "@/lib/fetchAgentHunt";
 import { FormFieldRender } from "@/components/FormFieldRender";
 
@@ -148,12 +149,29 @@ export default function DiagnosisFormB() {
       }
     }
     const hash = encodeInput(input);
+    const duration_ms = Date.now() - startedAtRef.current;
     track("route_b_submit", {
-      duration_ms: Date.now() - startedAtRef.current,
+      duration_ms,
       target_industry: targetIndustry,
       target_role_id: input.targetRoleId,
       skills_count: input.skills.length,
     });
+    fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uuid: getOrCreateUuid(),
+        route: "B",
+        skills: input.skills,
+        years_exp: input.yearsExp,
+        education: input.education,
+        city: input.city,
+        industry: targetIndustry || null,
+        target_role_id: input.targetRoleId,
+        report_hash: hash,
+        duration_ms,
+      }),
+    }).catch(() => undefined);
     router.push(`/result/${hash}`);
   }
 
