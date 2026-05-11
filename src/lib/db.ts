@@ -1,15 +1,15 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import path from "path";
 import fs from "fs";
 
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 
-let _db: InstanceType<typeof Database> | null = null;
+let _db: DatabaseSync | null = null;
 
-export function getDb(): InstanceType<typeof Database> {
+export function getDb(): DatabaseSync {
   if (_db) return _db;
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  _db = new Database(path.join(DATA_DIR, "analytics.db"));
+  _db = new DatabaseSync(path.join(DATA_DIR, "analytics.db"));
   _db.exec(`
     CREATE TABLE IF NOT EXISTS events (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
