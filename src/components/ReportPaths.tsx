@@ -107,25 +107,31 @@ export default function ReportPaths({ data }: { data: PathsData }) {
         </p>
       </div>
 
-      {/* 路径 B：3800 就业班 */}
+      {/* 路径 B：点头就业班 */}
       <div className="border border-blue-200 rounded-xl p-4 sm:p-5 mb-4 bg-blue-50/30">
         <h3 className="text-lg font-bold text-slate-900 mb-1">
-          {isFreshGrad
-            ? "路径 B · 3800 就业班（应届秋招 / 春招冲刺最佳节奏）"
-            : "路径 B · 3800 就业班（适合需要节奏感 + 教练 + 同伴）"}
+          路径 B · 点头就业班（适合时间比较紧的人）
         </h3>
         <p className="text-xs text-slate-500 mb-3">
-          {isFreshGrad
-            ? "12 周陪跑刚好衔接秋招 / 春招 · 同班分流 · 不打饥饿营销"
-            : "12 周陪跑 · 同班分流 · 每月开 1 期 · 不打饥饿营销"}
+          三个月全程陪跑 · 项目集成 · 定向课程补差
         </p>
 
-        <div className="text-sm text-slate-700 space-y-1.5 mb-3">
-          <p>· 12 周陪跑（每周 1 次群直播 + 1 次 1V1 教练 + 班主任督学）</p>
-          <p>· 一个真实项目（按你主线方向定制）</p>
-          <p>· 完整 portfolio（简历改造 + Demo 视频 + 模拟面试录像）</p>
-          <p>· 加入校友社群</p>
+        <div className="text-sm text-slate-700 space-y-1 mb-3">
+          <p>从岗位所需能力倒推去设计的就业专项课程。</p>
+          <p>新手通识 → 基础算法 → 工程化核心 → 技术栈拓展</p>
+          <p className="font-medium text-slate-900">你缺什么，补什么。</p>
         </div>
+
+        <div className="text-sm text-slate-700 space-y-1.5 mb-3">
+          <p>· 34 专项课程录播 + 三个月直播课程补差</p>
+          <p>· 20+ 项目落地项目集成训练</p>
+          <p>· 封班强监督三个月全程陪跑</p>
+          <p>· 专业简历分析 + 定向模拟面试</p>
+        </div>
+
+        <p className="text-sm text-slate-700 mb-3">
+          把路铺好、把项目安排好、把监督做好，节省你的时间。
+        </p>
 
         <div className="text-xs text-slate-600 space-y-1 bg-white rounded p-3">
           <p>❌ 不承诺包就业</p>

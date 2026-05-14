@@ -70,6 +70,8 @@ export interface CoverData {
   route: "A" | "B" | "C";
   // 路线 B：用户锁定的目标
   lockedTarget?: { industry?: string; roleName: string };
+  // 路线 B：原始 matchScore === 0 的兜底信号；UI 据此把 0% 显示成 ROUTE_B_FALLBACK_SCORE 并加调整方向 CTA
+  isLowMatch?: boolean;
   // 用户行业 → AI 增强 JD 切片，让封面带行业 context（"教育行业 59 条 AI 增强 JD"）
   industryContext?: {
     industryCN: string;
@@ -224,6 +226,10 @@ export interface Report {
 // JD 总数与角色总数现在从 narrative-stats.json runtime 读，远程不可达时回退到
 // 「数据源最低保证」（agent-hunt v0.7 时已经 5673 labeled / 8238 raw）。
 const JD_TOTAL_FALLBACK = 5673;
+
+// 路线 B 锁定目标 0% 兜底：原始 matchScore===0 时展示 5%，避免「0%」视觉冲击让用户直接离开；
+// 同时通过 cover.isLowMatch 信号在 UI 上补一条「建议调整方向 + 小助理 QR」CTA。
+const ROUTE_B_FALLBACK_SCORE = 5;
 
 function calcTrackScores(matches: RoleMatch[]): { track: Track; score: number }[] {
   // 用 TRANSITION_TRACKS 而不是 TRACKS：E 主线（留行）roleIds=[] 永远 score=0，
@@ -739,6 +745,14 @@ function generateRouteBReport(
   const freshComparison = buildFreshComparison(audience, gradEntry);
   const baseSalary = buildSalary(input, top, industrySalary, rolesByCity);
 
+  // 0% 显示兜底：matchScore 真实为 0 时展示 ROUTE_B_FALLBACK_SCORE，避免视觉冲击让用户直接离开。
+  // 但保留 whyMatched.zeroHit 等内部信号原状，给 reasoning 文案做诚实归因。
+  const isLowMatch = !!top && top.matchScore === 0;
+  const displayedScore = top ? (isLowMatch ? ROUTE_B_FALLBACK_SCORE : top.matchScore) : 0;
+  const displayedMatches = top
+    ? [{ ...top, matchScore: displayedScore }, ...matches.slice(1)]
+    : matches;
+
   return {
     cover: {
       title: top
@@ -750,7 +764,7 @@ function generateRouteBReport(
       city: input.city,
       trackScores: [],
       topRoles: top
-        ? [{ roleName: top.roleName, matchScore: top.matchScore }]
+        ? [{ roleName: top.roleName, matchScore: displayedScore }]
         : [],
       reportId,
       generatedAt,
@@ -758,12 +772,13 @@ function generateRouteBReport(
       lockedTarget: top
         ? { industry: lockedIndustry, roleName: top.roleName }
         : undefined,
+      isLowMatch,
       industryContext: buildIndustryContext(input, industrySalary),
       gradContext,
       trackFingerprints: buildTrackFingerprints(input),
     },
     roles: {
-      topMatches: matches,
+      topMatches: displayedMatches,
       totalRoles: rolesTotal,
       totalJDs: jdTotal,
       route: "B",
