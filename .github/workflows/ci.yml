@@ -14,7 +14,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # 22.x：node:sqlite 内置模块（仍需 --experimental-sqlite 标志）
+          node-version: "22"
           cache: "npm"
 
       - run: npm ci
@@ -26,4 +27,6 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Build
+        env:
+          NODE_OPTIONS: --experimental-sqlite
         run: npm run build
