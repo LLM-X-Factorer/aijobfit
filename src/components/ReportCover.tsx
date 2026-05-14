@@ -1,4 +1,5 @@
 import { CoverData, AugmentTargetData } from "@/lib/reportGen";
+import AssistantQR from "./AssistantQR";
 
 export default function ReportCover({
   data,
@@ -173,27 +174,39 @@ export default function ReportCover({
         <div>
           <h3 className="text-sm font-bold text-slate-700 mb-3">你锁定的目标</h3>
           {data.lockedTarget && data.topRoles[0] ? (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-              <p className="text-xs text-blue-600 font-mono mb-1">TARGET</p>
-              <div className="flex items-baseline justify-between flex-wrap gap-3">
-                <div>
-                  {data.lockedTarget.industry && (
-                    <p className="text-sm text-slate-600 mb-1">
-                      {data.lockedTarget.industry} 行业
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                <p className="text-xs text-blue-600 font-mono mb-1">TARGET</p>
+                <div className="flex items-baseline justify-between flex-wrap gap-3">
+                  <div>
+                    {data.lockedTarget.industry && (
+                      <p className="text-sm text-slate-600 mb-1">
+                        {data.lockedTarget.industry} 行业
+                      </p>
+                    )}
+                    <p className="text-xl sm:text-2xl font-black text-slate-900">
+                      {data.lockedTarget.roleName}
                     </p>
-                  )}
-                  <p className="text-xl sm:text-2xl font-black text-slate-900">
-                    {data.lockedTarget.roleName}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-4xl sm:text-5xl font-black text-blue-700">
-                    {data.topRoles[0].matchScore}%
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">综合匹配度</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl sm:text-5xl font-black text-blue-700">
+                      {data.topRoles[0].matchScore}%
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">综合匹配度</p>
+                  </div>
                 </div>
               </div>
-            </div>
+              {data.isLowMatch && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5">
+                  <p className="text-sm leading-relaxed text-slate-700">
+                    根据您的描述及市场数据，当前目标岗位的整体匹配度不高。建议您适当调整岗位方向后再尝试。您也可以扫描下方二维码，我们将根据您的具体情况，为您专项推荐更合适的岗位。
+                  </p>
+                  <div className="mt-4 flex justify-center">
+                    <AssistantQR size={160} caption="扫码加小助理，专项推荐岗位" />
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm text-slate-500">未锁定目标，请回到 /diagnose-target 重新选择</p>
           )}
