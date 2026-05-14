@@ -199,9 +199,17 @@ ship 后生产规模 228 个 static page + RSS feed，sitemap 222 URL。GSC 已 
 - **数据导出**：`GET /api/admin/export?token=<DATA_ADMIN_TOKEN>&table=submissions|events&fmt=csv|json&limit=N&since=<ts_ms>`；token 默认 `aijobfit-admin-2026`，生产建议通过 env 覆盖
 - **Dockerfile fix**：`CMD ["node", "--experimental-sqlite", "server.js"]`（兼容 Node 22.5-22.11）
 
+### Route B 0% 兜底 + 点头就业班（v0.5.1，2026-05-14）
+
+业务方反馈两条调整 ship。
+
+- **Route B 锁定目标 0% 兜底**（PR #44，commit `40183ad`）—— `generateRouteBReport` 在 `top.matchScore === 0` 时把 cover.topRoles[0] 和 roles.topMatches[0] 的 matchScore 同步 floor 到 `ROUTE_B_FALLBACK_SCORE = 5`，并设置 `cover.isLowMatch = true`；ReportCover 检测到信号后在 TARGET 卡片下方追加 amber 兜底块（描述 + 160px AssistantQR），引导用户「调整方向 / 扫码专项推荐」。原始 matchScore 仅作为显示层 floor，whyMatched.zeroHit 等内部信号原状不动
+- **路径 B「点头就业班」文案重写** —— ReportPaths 替换原「3800 就业班（适合需要节奏感 + 教练 + 同伴）」为「点头就业班（适合时间比较紧的人）· 三个月全程陪跑 · 项目集成 · 定向课程补差」+「从岗位所需能力倒推 / 你缺什么补什么」+ 34 录播 / 20+ 项目 / 封班强监督 / 简历分析 4 bullet。同时移除 isFreshGrad 文案分支（新文案普适，应届/社招统一）；价格不再硬编码进产品，以运营侧报价为准
+- **CI Node 22 修复** —— `.github/workflows/ci.yml` 把 setup-node 从 20 升到 22，build step 加 `NODE_OPTIONS=--experimental-sqlite`。修了 main 自 v0.5.0 起红了 3 天的 CI（`node:sqlite` Node 20 不可用）
+
 ### 工程基建
 
-- **CI**：GitHub Actions lint + tsc + build
+- **CI**：GitHub Actions Node 22 + `--experimental-sqlite` + lint + tsc + build
 - **验证**：`scripts/verify-acceptance.ts` 9 个 case（C1-C9 + CT 主线指纹），跑 live agent-hunt 数据
 - **运营 / 业务文档**：
   - [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) — 话术 / FAQ / 异常处理
