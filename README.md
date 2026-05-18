@@ -149,7 +149,7 @@ src/
     TrackOverviewServer.tsx               server wrapper：runtime 算 E 主线 jdCount / medianSalary / professionCount
     SharePoster.tsx                       1080×1920 海报（按 route 切版式）
     blog/PostShell.tsx                    Blog 共享 frame（Article+Breadcrumb LD + Hero + CTA + H2/P/Ul/DataTable/Callout helpers）
-    blog/posts/*.tsx                      9 篇 blog 内容 component
+    blog/posts/*.tsx                      9 篇 blog 内容 component（应届分支新案例由 shushu 生成，见下方「案例文章生产」）
   lib/
     matching.ts                           14 角色匹配 + industry hard filter + whyMatched + trackFingerprint
     professionMatch.ts                    free-text 原职业 → 420 entry 模糊匹配（exact + fuzzy + MIN_VACANCY 门槛）
@@ -199,6 +199,14 @@ public/
 `src/lib/fetchAgentHunt.ts` 客户端先尝试 `https://agent-hunt.pages.dev/data/*.json`，失败 fallback 到 `public/data/` 本地快照。`src/lib/serverData.ts` server 端反过来：本地快照优先（`roles-domestic.json` / `skills.json`），其他 endpoint 远程拉 + null fallback。
 
 agent-hunt 已 ship 8 个 endpoint（含 #9 行业 × 角色二维切片 `roles-by-industry.json` 已接入），aijobfit 全部已接入；数据 schema 变化时同步检查 `fetchAgentHunt.ts` 类型即可。
+
+## 案例文章生产
+
+应届分支（`audience=fresh-grad`）的实习复盘示范案例由配套仓库 [shushu](https://github.com/LLM-X-Factorer/shushu-internship-resume-optimizer) 生成。
+
+shushu 是一个最小化脚本：输入一份脱敏后的实习项目描述 + 目标角色 id（aijobfit 14 角色之一），LLM 走 `extract → 命中扫描 → 改写 → 风险标注` 四步，直接输出可放进 `src/components/blog/posts/` 的 `.tsx` 文件 + 原始 JSON 副本（人工审阅用）。
+
+shushu 仓库里的 `shushu/data/aijobfit_roles.json` 是本仓库 `public/data/roles-domestic.json` 的 hard copy。每次本仓库更新角色清单（新增 / 重命名 / required_skills 调整）后，需要手动同步到 shushu 并在 commit message 里写明来源 commit hash。
 
 ## 运营 / 业务请看
 
