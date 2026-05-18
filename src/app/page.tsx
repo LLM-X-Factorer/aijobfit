@@ -97,10 +97,12 @@ export default async function Home() {
         <p className="text-xs font-mono tracking-widest text-blue-600 uppercase mb-4">
           AI Career Fit Diagnosis · v0.1
         </p>
-        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 max-w-3xl mb-5">
-          给非程序员的
-          <br className="md:hidden" />
-          <span className="text-blue-600"> AI 求职定位</span>诊断
+        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 max-w-4xl mb-5 leading-tight">
+          <span className="whitespace-nowrap">给非程序员的</span>
+          <br />
+          <span className="whitespace-nowrap">
+            <span className="text-blue-600">AI 求职定位</span>诊断
+          </span>
         </h1>
         <p className="text-base md:text-lg text-slate-600 max-w-xl mb-2">
           用 {jdAll.toLocaleString()}+ 条真实招聘 JD 数据，10 分钟告诉你适合做什么 AI 岗位、缺什么技能、怎么补。
