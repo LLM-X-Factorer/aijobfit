@@ -118,6 +118,11 @@ npx tsx scripts/verify-acceptance.ts  # 跑 9 个端到端验收 case（拉 live
 
 ## 产品已锁定的决策（不再重新讨论）
 
+- **本仓库 = 产品；shushu 是产品旁边写文章的离线小工具**。shushu (`github.com/LLM-X-Factorer/shushu-internship-resume-optimizer`) 用 DeepSeek 把脱敏实习描述渲染成 `src/components/blog/posts/*.tsx`。
+  - `public/data/roles-domestic.json` 是 14 角色的**源**；shushu 那边的 `shushu/data/aijobfit_roles.json` 是 hard copy。**本仓库说了算**，更新后手动同步到 shushu。
+  - 生成的 `.tsx` 单篇润色 / 数字补齐：**直接在本仓库手改，不回流到 shushu**。
+  - `PostShell` API 改动是 breaking change：**先改本仓库，再去 shushu 改 `render.py`**，否则下一篇生成的 tsx 会 build 失败。
+  - 本仓库**不依赖** shushu；砍掉 shushu aijobfit 照常运行。shushu **不读** agent-hunt、**不调** 本仓库 API、**不知道**用户存在。
 - **本 app 永久免费，不做产品内付费**。商业化（1V1 / 社群 / 课程）在产品外独立运营
 - **产品形态 = 三路线并行**：A 推荐 / B 转行 Gap / C 留行 + AI 增强，互不替代；首页 B+C 主 CTA，A 兜底
 - **5 主线**：A AI PM / B AI 运营 / C AI 转型咨询 / D AIGC 创意 / **E 留行 + AI 增强**。E 不参与 ABCD 4 主线匹配 boost（`TRANSITION_TRACKS` 排除），E 作为独立 Route C 入口
