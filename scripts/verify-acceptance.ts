@@ -29,6 +29,7 @@ import {
   fetchRolesGraduateFriendly,
 } from "../src/lib/fetchAgentHunt";
 import type { UserInput } from "../src/lib/encoding";
+import { auditMaterial } from "../src/lib/materialAudit";
 
 const BANNER = "─".repeat(80);
 
@@ -344,6 +345,41 @@ async function main() {
   print("gradContext deltaPct", r9.cover.gradContext?.deltaPct);
   print("gradContext topCampusCities", r9.cover.gradContext?.topCampusCities);
   print("gradBreakdown", r9.roles.gradBreakdown);
+
+  // ── C10 材料体检：句子分类 chip 正确性 ────────────────────────
+  console.log(BANNER);
+  console.log("C10 · 材料体检（auditMaterial）");
+  const c10Text =
+    "搭建 RAG 知识库，平均响应时间从 1200ms 降到 400ms，准确率 85%。" +
+    "赋能业务全链路，打通端到端闭环。";
+  const auditRes = auditMaterial(c10Text, "product_manager", roles, skills);
+  print("句子数", auditRes.summary.totalSentences);
+  print("目标技能集合大小", auditRes.targetSkills.length);
+  print("命中目标技能", auditRes.summary.uniqueSkillsHit);
+  print("缺量化句数", auditRes.summary.sentencesNeedingQuant);
+  print("大词风险句数", auditRes.summary.sentencesWithOverclaim);
+  for (let i = 0; i < auditRes.sentences.length; i++) {
+    const s = auditRes.sentences[i];
+    console.log(
+      `  句 #${i + 1}：${s.text.slice(0, 30)}... · hit=${s.hitSkills.length} quantOK=${!s.needsQuantification} overclaim=${s.overclaimWords.join("/") || "-"} tooLong=${s.tooLong}`,
+    );
+  }
+  // 断言：第 1 句有数字应通过量化检测；第 2 句缺数字 + 含「赋能 / 闭环 / 打通 / 端到端」应触发 overclaim
+  const first = auditRes.sentences[0];
+  const second = auditRes.sentences[1];
+  if (!first || first.needsQuantification) {
+    console.error("❌ C10 断言失败：含 ms/% 的句子应通过量化检测");
+    process.exit(1);
+  }
+  if (!second || second.overclaimWords.length === 0) {
+    console.error("❌ C10 断言失败：含「赋能」的句子应触发 overclaim");
+    process.exit(1);
+  }
+  if (!second.needsQuantification) {
+    console.error("❌ C10 断言失败：无数字的句子应被标 needsQuantification");
+    process.exit(1);
+  }
+  print("✓ C10 全部断言通过", true);
 
   console.log(BANNER);
 }

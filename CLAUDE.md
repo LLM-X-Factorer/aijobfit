@@ -207,6 +207,16 @@ ship 后生产规模 228 个 static page + RSS feed，sitemap 222 URL。GSC 已 
 - **路径 B「点头就业班」文案重写** —— ReportPaths 替换原「3800 就业班（适合需要节奏感 + 教练 + 同伴）」为「点头就业班（适合时间比较紧的人）· 三个月全程陪跑 · 项目集成 · 定向课程补差」+「从岗位所需能力倒推 / 你缺什么补什么」+ 34 录播 / 20+ 项目 / 封班强监督 / 简历分析 4 bullet。同时移除 isFreshGrad 文案分支（新文案普适，应届/社招统一）；价格不再硬编码进产品，以运营侧报价为准
 - **CI Node 22 修复** —— `.github/workflows/ci.yml` 把 setup-node 从 20 升到 22，build step 加 `NODE_OPTIONS=--experimental-sqlite`。修了 main 自 v0.5.0 起红了 3 天的 CI（`node:sqlite` Node 20 不可用）
 
+### 材料体检子卡（v0.6.0，2026-05-18）
+
+报告页加一张「简历素材体检」卡，零 LLM、纯客户端规则诊断。位置：`</LockedSections>` 下方（开放区，不挡漏斗）；audience-aware 标题（应届=实习经历体检 / 社招=项目经历体检）；三路线 A/B/C 都展示。
+
+- **`src/lib/materialAudit.ts`** — 主入口 `auditMaterial(text, targetRoleId, roles, skills)` 解析出 Track.keySkills + role.required_skills 前 10 项拼成 keywords；辅助入口 `auditMaterialAgainstSkills(text, targetName, targetSkills)` 给 Route C 用 augmentSkills 当目标词。按句切分（`/[。；;.!?！？\n]+/`），每句跑四项规则：技能命中（case-insensitive substring，沿用 `matchTrackKeySkills` 口径）/ 量化检测（`/\d+(\.\d+)?\s*(%|ms|s|分钟|小时|天|倍|条|人|次)/`）/ 大词黑名单（赋能 / 全链路 / 闭环 / 降本增效 / 打通 / 抓手 / 深度结合 / 全方位 / 一站式 / 端到端）/ 句长 > 60 字。
+- **`src/components/ReportMaterialAudit.tsx`** — textarea + 体检按钮，逐句渲染 chip（绿=命中 / 黄=缺量化 / 红=大词 / 灰=过长）+ 顶部汇总条 + 未提到的 keySkills tag cloud；只发 `material_audit_run` 计数事件（句数 / 命中数 / 量化缺失数 / 大词数 / 过长数），不上传文本。
+- **接入** — `src/app/result/[hash]/ReportClient.tsx` 把 roles/skills 留在 state，渲染时 Route A/B 传 `targetRoleId = topMatches[0].roleId`、Route C 传 `augmentSkills = augment.augmentSkills.map(s => s.skillName)`。
+- **C10 acceptance** — `scripts/verify-acceptance.ts` 加 C10，断言：含 ms/% 句通过量化检测 ✓ / 含「赋能」句触发 overclaim ✓ / 无数字句被标 needsQuantification ✓。
+- **机制透明** — 卡片底部把规则口径明写出来，和现有 trackFingerprints / whyMatched 同款不黑盒叙事。
+
 ### 工程基建
 
 - **CI**：GitHub Actions Node 22 + `--experimental-sqlite` + lint + tsc + build

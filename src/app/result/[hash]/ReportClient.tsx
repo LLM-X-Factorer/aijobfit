@@ -11,6 +11,8 @@ import {
   fetchNarrativeStats,
   fetchRolesAugmentedByProfession,
   fetchRolesGraduateFriendly,
+  Role,
+  Skill,
 } from "@/lib/fetchAgentHunt";
 import { generateReport, Report } from "@/lib/reportGen";
 import { track } from "@/lib/track";
@@ -22,6 +24,7 @@ import ReportGap from "@/components/ReportGap";
 import ReportPaths from "@/components/ReportPaths";
 import ReportActions from "@/components/ReportActions";
 import ReportFallbackNotice from "@/components/ReportFallbackNotice";
+import ReportMaterialAudit from "@/components/ReportMaterialAudit";
 import SharePoster from "@/components/SharePoster";
 import LockedSections from "@/components/LockedSections";
 
@@ -29,6 +32,8 @@ type CopyState = "idle" | "copied" | "wechat-hint" | "failed";
 
 export default function ReportClient({ hash }: { hash: string }) {
   const [report, setReport] = useState<Report | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
 
@@ -66,6 +71,8 @@ export default function ReportClient({ hash }: { hash: string }) {
           gradFriendly,
         );
         setReport(r);
+        setRoles(roles);
+        setSkills(skills);
         track("report_view", {
           report_id: reportId,
           top_role: r.cover.topRoles[0]?.roleName,
@@ -185,6 +192,18 @@ export default function ReportClient({ hash }: { hash: string }) {
           <ReportPaths data={report.paths} />
           <ReportActions actions={report.actions} meta={report.meta} />
         </LockedSections>
+        <ReportMaterialAudit
+          targetRoleId={report.roles.topMatches[0]?.roleId}
+          targetRoleName={
+            report.roles.topMatches[0]?.roleName ?? report.augment?.matchedKey
+          }
+          augmentSkills={report.augment?.augmentSkills.map((s) => s.skillName)}
+          roles={roles}
+          skills={skills}
+          audience={report.paths.audience}
+          route={report.meta.route}
+          reportId={report.meta.reportId}
+        />
         {report.meta.route === "A" && (
           <section className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">
