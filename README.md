@@ -18,6 +18,8 @@
 
 **双一等受众**：社招用户 + 应届生 / 学生（含在读、应届无实习、应届有实习）。表单分支 + 报告路径文案做应届/社招差异化；audience=fresh-grad 时 cover/roles/salary 注入「校招 vs 社招」对照（接 agent-hunt `roles-graduate-friendly.json`）。
 
+**v0.7.0 新增 `/positioner` 独立通道**：给点头教育 V8 第二阶段就业向课程的 45 分钟公开课结尾钩子用。4 道题 → 4 象限定位，**受众和加微目标都和 A/B/C 主流程不同**：主流程面向不会编程的用户加 aijobfit 小助理用激活码解锁；/positioner 面向已经在写代码、想往 AI 工程师方向走的人，加点头就业班私域。报告 4 节全开放、无遮罩。**不出现在首页或任何主流程导航里**——只有直达 URL 和 A/B/C 报告页第 7 节末尾的「测一下我的位置」窄卡两个入口。详见下方 [`/positioner` 独立通道](#positioner-独立通道v070) 一节。
+
 漏斗机制：
 - 用户填 3 步表单 → 报告生成
 - 前 3 节（封面 / 角色市场全景 / 薪资）开放
@@ -53,7 +55,8 @@ A AI PM / B AI 运营 / C AI 转型咨询 / D AIGC 创意（A-D 是「转行」�
 - **pSEO 路由（228 静态页）**：14 `/role/[id]` 角色画像 + 12 `/industry/[id]` 行业切片 + 65 `/industry/[id]/[role]` 二维切片（agent-hunt #9）+ 25 `/city/[tier]/[role]` 城市薪资 + 91 `/compare/[a]-vs-[b]` 角色对比 + `/skills` 35 技能 × 14 角色 SVG heatmap（含反向查表 + Article + Dataset LD）
 - **Blog 系统**：`/blog` + `/blog/[slug]` 站内深度文章（PostShell + Article LD + 三路线 CTA），9 篇覆盖数据集深度 / 电气 / 教师 / 医生 / 销售 / 应届生 / 财务 / HR / 设计师
 - **HowTo schema**：`/diagnose` / `/diagnose-target` / `/diagnose-augment` 三路线注入 HowTo JSON-LD，让 AI 引擎在「如何做 AI 求职诊断」类 query 时召回
-- **漏斗埋点**：form_submit / route_b_submit / route_c_submit / report_view / report_reject_top3_click / report_b_reselect_target_click / report_b_switch_to_a_click / report_a_to_c_click / report_b_to_c_click / report_c_to_b_click / report_c_to_a_click / mask_see / code_enter_{success,fail}
+- **/positioner 独立通道（v0.7.0）**：4 题 / 1 分钟 / 4 象限定位（Q1 方向已对 / Q2 有底子缺位置 / Q3 补认知框架 / Q4 先停下来）。`「不确定 ≥3」直接归 Q4` 的判定规则优先于分数判定，避免「高能力 × 低判断」被推进就业班；URL 用 4 位 `0/1/2` 编码（如 `/positioner/result/0011`），无后端依赖、可分享、刷新可重现；OG 图按象限差异化（Q4 amber 警示色 + 单 CTA，其余蓝主色 + 主副双 CTA）
+- **漏斗埋点**：form_submit / route_b_submit / route_c_submit / report_view / report_reject_top3_click / report_b_reselect_target_click / report_b_switch_to_a_click / report_a_to_c_click / report_b_to_c_click / report_c_to_b_click / report_c_to_a_click / mask_see / code_enter_{success,fail} / **positioner_form_view / positioner_form_submit / positioner_report_view / positioner_cta_click / report_to_positioner_click**（独立通道 5 个 + 主流程出口卡 1 个，全部 L1 落 SQLite）
 - **用户行为分析（L1+L2）**：每次表单提交和埋点事件持久化到 SQLite（`events` + `submissions` 两张表）；UUID per browser（localStorage，无需登录）；audience 自动推断；数据导出见 Docker 部署节
 - **CI 绿**：GitHub Actions 跑 lint + tsc + build
 
@@ -114,11 +117,17 @@ src/
     diagnose-augment/page.tsx             路线 C 表单页 + 跨路线提示
     result/[hash]/
       page.tsx                            metadata（2 套 og:image）
-      ReportClient.tsx                    报告 + 顶栏 + 按 route 切底部三路线互通 CTA
+      ReportClient.tsx                    报告 + 顶栏 + 按 route 切底部三路线互通 CTA + /positioner 出口卡
+    positioner/                           v0.7.0 独立通道（受众 / 加微钩子都和主流程不同）
+      page.tsx                            4 题表单入口
+      result/[hash]/
+        page.tsx                          4 位 code 解码 + 4 象限 metadata
+        PositionerReport.tsx              4 节报告（位置 / 意味 / 接下来 / CTA）
     api/
       og/route.tsx                        站点级 OG 1200×630
       og/[hash]/route.tsx                 报告动态 OG 1200×630（按 route 切 label）
       og/dynamic/route.tsx                pSEO 通用动态 OG（query string，1200×630 + 800×800 双尺寸 + blue/emerald 主题）
+      og/positioner/[hash]/route.tsx      /positioner 报告动态 OG（按象限切配色 + 单/双 CTA）
       og-square/route.tsx                 站点级方形 OG 800×800（微信）
       og-square/[hash]/route.tsx          报告动态方形 OG（按 route 切 label）
       track/route.ts                      L1 事件持久化（POST uuid+event_type+route+extra）
@@ -145,6 +154,9 @@ src/
     DiagnosisFormB.tsx                    路线 B 多步表单（锁定 14 角色）
     DiagnosisFormC.tsx                    路线 C 多步表单（free-text 原职业 + 实时数据集预览 + alternatives chips）
     FormFieldRender.tsx                   字段渲染 helper（A/B/C 共用）
+    PositionerForm.tsx                    /positioner 4 题表单（独立通道，不复用 A/B/C 组件）
+    PositionerQuadrantChart.tsx           纯 SVG 2×2 象限图（Q4 amber 警示，其余蓝）
+    PositionerCtaCard.tsx                 4 象限主 / 副 CTA 卡（QR 占位待运营提供，onError 隐藏 broken icon）
     TrackOverview.tsx                     5 主线卡片（pure presentation，client-safe）
     TrackOverviewServer.tsx               server wrapper：runtime 算 E 主线 jdCount / medianSalary / professionCount
     SharePoster.tsx                       1080×1920 海报（按 route 切版式）
@@ -164,6 +176,7 @@ src/
     encoding.ts                           base64url 编码（route="A"|"B"|"C" + targetRoleId / originProfession）
     serverData.ts                         8 个 endpoint server loader（OG / SSR）
     ogUrl.ts                              dynamic OG query string builder（pSEO 用）
+    positioner.ts                         4 题元数据 + 4 位 0/1/2 编码 + 评分 + 4 象限文案（独立通道）
   data/
     tracks.ts                             5 主线元数据 + TRANSITION_TRACKS（ABCD-only）
     form-fields.ts                        表单字段定义（含应届生分支）
@@ -199,6 +212,34 @@ public/
 `src/lib/fetchAgentHunt.ts` 客户端先尝试 `https://agent-hunt.pages.dev/data/*.json`，失败 fallback 到 `public/data/` 本地快照。`src/lib/serverData.ts` server 端反过来：本地快照优先（`roles-domestic.json` / `skills.json`），其他 endpoint 远程拉 + null fallback。
 
 agent-hunt 已 ship 8 个 endpoint（含 #9 行业 × 角色二维切片 `roles-by-industry.json` 已接入），aijobfit 全部已接入；数据 schema 变化时同步检查 `fetchAgentHunt.ts` 类型即可。
+
+## /positioner 独立通道（v0.7.0）
+
+aijobfit 主流程之外的另一条线。**业务来源**：点头教育 V8 第二阶段就业向课程 + 45 分钟公开课结尾钩子。
+
+**受众和加微目标都和 A/B/C 不一样**：
+
+| | 主流程 A/B/C | /positioner |
+|---|---|---|
+| 用户画像 | **非程序员**，想转 AI 但不会写代码 | **已经在写代码 / vibe coding 的人**，想成为 AI 工程师 |
+| 钩子 | 加 aijobfit 小助理 → 激活码 `AIJOB-2026` 解锁 | 加**点头就业班私域** |
+| 报告形态 | 7 节，前 3 开放 + 后 4 遮罩 | 4 节全开放、无遮罩 |
+| URL | base64url(JSON) 长 hash | 4 位 `0/1/2`（如 `/positioner/result/0011`） |
+| 入口 | 首页 / 表单页 / pSEO 落地页 | **不出现在主流程导航**——只有直达 URL + A/B/C 报告页第 7 节末尾的窄卡 |
+
+**4 题 + 4 象限规则**：每题 3 选项（正向 / 负向 / 不确定）。**「不确定 ≥3」直接归 Q4** 优先于按分数判定，避免「2 正向 + 2 不确定」的高能力 × 低判断用户被推进就业班。否则正向 ≥3 → Q1（方向已对）/ =2 → Q2（有底子缺位置，主转化人群）/ ≤1 → Q3（补认知框架）。
+
+**CTA 按象限分流**：Q1 推就业班 + 副 CTA 公开课；Q2 主推公开课 + 副 CTA 1v1；Q3 主推 1v1（领诊断表） + 副 CTA 公开课；Q4 amber 警示色 + 单 1v1 CTA（不推任何课）。
+
+**等运营 / 流量团队反馈的 TODO**（代码里已留 `// TODO: 流量团队提供入口` 占位）：
+
+1. 3 张微信二维码 PNG（`public/qr-positioner-{class,preview,consult}.png`）
+2. 公开课报名链接 / 时间
+3. 1v1「关键词位置」对接人 + 《AI 工程师位置诊断表》文件
+4. V8 就业班统一报价 / 开班时间
+5. 4 象限加微后的标准话术（Q1/Q2/Q3/Q4 各一版）
+
+详见 [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) 第 12 章。
 
 ## 案例文章生产 · 与 shushu 的边界
 

@@ -204,6 +204,31 @@ export default function ReportClient({ hash }: { hash: string }) {
           route={report.meta.route}
           reportId={report.meta.reportId}
         />
+        <section className="bg-white border-2 border-slate-200 rounded-2xl p-5 sm:p-8">
+          <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+            <div className="flex-1">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">
+                已经在写代码？想成为 AI 工程师？
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                这是 aijobfit 主流程外的另一条线：4 道题、1 分钟、不收集任何背景信息，
+                看清你在 AI 时代的位置——不是「再学一门技术」，而是「你站在哪里」。
+              </p>
+            </div>
+            <Link
+              href="/positioner"
+              onClick={() =>
+                track("report_to_positioner_click", {
+                  report_id: report.meta.reportId,
+                  route: report.meta.route,
+                })
+              }
+              className="shrink-0 inline-block bg-slate-900 hover:bg-slate-700 active:bg-slate-800 text-white font-bold px-6 py-3 rounded-full transition-colors whitespace-nowrap"
+            >
+              测一下我的位置 →
+            </Link>
+          </div>
+        </section>
         {report.meta.route === "A" && (
           <section className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">

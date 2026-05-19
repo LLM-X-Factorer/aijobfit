@@ -222,6 +222,26 @@ ship 后生产规模 228 个 static page + RSS feed，sitemap 222 URL。GSC 已 
 - **C10 acceptance** — `scripts/verify-acceptance.ts` 加 C10，断言：含 ms/% 句通过量化检测 ✓ / 含「赋能」句触发 overclaim ✓ / 无数字句被标 needsQuantification ✓。
 - **机制透明** — 卡片底部把规则口径明写出来，和现有 trackFingerprints / whyMatched 同款不黑盒叙事。
 
+### AI 工程师位置诊断 · 独立通道 /positioner（v0.7.0，2026-05-19）
+
+aijobfit 主流程之外的另一条线，**受众和加微目标都不同**：
+- 主流程（A/B/C）= 非程序员转 AI，加 aijobfit 小助理用激活码解锁
+- /positioner = 已经在写代码的人，加**点头就业班私域**，钩子在 CTA 卡（不解锁）
+
+业务来源：点头 V8 第二阶段就业向课程 + 45 分钟公开课结尾钩子。**不放进首页 / Header / 任何主流程导航**，只暴露两个入口：直接 URL 和 A/B/C 报告页第 7 节末尾的「测一下我的位置」窄卡。
+
+- **`src/lib/positioner.ts`** — 4 题元数据 + 4 位 `0/1/2` 编码（如 `0011`）+ 评分 + 4 象限文案（含 axes / 主副 CTA action 枚举 `joinClass | previewClass | consult1v1`）。判定规则：**「不确定 ≥3」直接归 Q4**（优先于按分数判定，避免「2 正向 + 2 不确定」被推进就业班的危险状态）；否则正向 ≥3 → Q1 / =2 → Q2 / ≤1 → Q3
+- **`src/app/positioner/page.tsx`** + **`src/components/PositionerForm.tsx`** — 4 步单题表单，每题 3 选项，复用主流程进度条 / 按钮样式，发 `positioner_form_view` / `positioner_form_submit`（含 q1-q4 + 算出的 quadrant）
+- **`src/app/positioner/result/[hash]/page.tsx`** + **`PositionerReport.tsx`** — 4 节报告（位置 / 意味 / 接下来 / CTA），**不是 7 节、无遮罩**。SVG 2×2 象限图（Q4 用 amber 警示色 + 单 CTA）+ details 展开「你的 4 题答复」做机制透明
+- **`src/components/PositionerCtaCard.tsx`** — 主 / 副 CTA 卡，QR 路径用 `// TODO: 流量团队提供入口` 占位（`/qr-positioner-{class,preview,consult}.png` 三张图待运营上传，组件已用 `onError` 隐藏 broken icon）。「我已扫码 / 我有问题」按钮发 `positioner_cta_click`（含 quadrant + action + variant）
+- **`src/components/PositionerQuadrantChart.tsx`** — 纯 SVG 2×2，按 axes 定位（Q1 右上 / Q2 左上 / Q3 左下 / Q4 右下），高亮当前象限
+- **`src/app/api/og/positioner/[hash]/route.tsx`** — 4 象限差异化 OG（Q4 amber 主色，其余蓝），含象限名 + 正向/不确定计数；非法 code 走 fallback OG
+- **三路线出口卡** — `ReportClient.tsx:195-219` 在材料体检卡和现有 A/B/C 跨路线 CTA 之间插一张窄卡「已经在写代码？想成为 AI 工程师？测一下我的位置 →」，发 `report_to_positioner_click`（含 route=A/B/C，可拆漏斗看哪条主流程导出最多）
+- **5 个埋点全部 L1 落 SQLite**：`positioner_form_view` / `positioner_form_submit` / `positioner_report_view` / `positioner_cta_click` / `report_to_positioner_click`
+- **sitemap** — 加 `/positioner` 静态入口（hash 报告页不入 sitemap，与 `/result/[hash]` 同策略）
+- **本地 E2E 通过** — 表单校验 / Q1-Q4 4 个象限 / 非法 code 错误页 / A/B/C 出口卡跳转 / OG 200 PNG / sitemap 含 /positioner / 5 个埋点落库，0 console error。仅有 3 个 404 = QR 占位图，运营上传后消失
+- **运营 TODO**（流量团队需提供，已写进 [`docs/产品手册-运营版.md`](./docs/产品手册-运营版.md) 第 12.5 节）：3 张 QR 图 / 公开课报名链接 / 1v1 关键词「位置」对接人 + 诊断表 / V8 报价 / 4 象限加微话术模板
+
 ### 工程基建
 
 - **CI**：GitHub Actions Node 22 + `--experimental-sqlite` + lint + tsc + build
