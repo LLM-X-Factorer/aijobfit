@@ -274,3 +274,25 @@ aijobfit 仓库 GitHub OPEN issue（5-01 二期 ship 后同步）：
 ## 历史已关闭 issue
 
 #1 付费墙 · #2 PDF（pivot 废弃）· #3 agent-hunt refetch · #4 部署 · #5-#12 早期迭代 · #15 路线 B · #16 应届生 · #17 5 主线 E · #18 whyMatched · #19 行业 × 岗位维度 · #20 主线透明化 · #21 报告兜底 CTA · 业务方反馈 P0/P1/P2 重构（2026-04-29 → 04-30）· agent-hunt#9 行业 × 角色二维切片（aijobfit 接入 5-01，commit `23e1d34`）· **GEO 二期（2026-05-01）**: #30 HowTo schema 三路线 / #31 /skills heatmap / #32 RSS feed / #33 更多 blog 题材（top-3 候选 finance/HR/designer 已 ship，2/5 残留候选移到 #42）/ #34 LCP warning
+
+## 🚀 部署运维（本仓库可直接操作线上服务器）
+
+> 本项目已部署上线。运维真源见 `~/Projects/INFRA-INVENTORY.md`。本机已配 SSH 密钥别名，可直接操作服务器，无需额外凭证。
+
+- **服务器**：`llmx-lh`
+- **部署目录**：`/opt/aijobfit`
+- **运行方式**：docker compose（`docker-compose.yml`）
+- **域名**：aijobfit.llmxfactor.cloud
+- **当前状态**：运行中
+
+常用操作（本机任意目录均可执行）：
+
+```bash
+ssh llmx-lh "sudo docker compose -f /opt/aijobfit/docker-compose.yml ps"                  # 状态
+ssh llmx-lh "sudo docker compose -f /opt/aijobfit/docker-compose.yml logs --tail=200 -f"  # 日志
+ssh llmx-lh "sudo docker compose -f /opt/aijobfit/docker-compose.yml restart"             # 重启
+ssh llmx-lh "sudo docker compose -f /opt/aijobfit/docker-compose.yml start"               # 启(复活已停服务)
+ssh llmx-lh "sudo docker compose -f /opt/aijobfit/docker-compose.yml stop"                # 停
+# 更新部署(拉代码+重建, 末尾清 build 缓存防爆盘):
+ssh llmx-lh "cd /opt/aijobfit && sudo git pull && sudo docker compose -f docker-compose.yml up -d --build && sudo docker builder prune -af"
+```
