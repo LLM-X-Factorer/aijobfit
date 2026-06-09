@@ -1,6 +1,6 @@
 # AIJobFit — 非程序员 AI 求职定位诊断
 
-> 用 8238+ 条真实 AI 岗位 JD 数据（runtime 拉 agent-hunt 8 个 endpoint），10 分钟告诉非程序员：你适合做什么 AI 岗位、缺什么技能、怎么补；如果你不想转行，怎么在原行业加 AI 技能让自己更值钱。**生产规模 228 个 static page + RSS feed**（14 角色 + 12 行业 + 65 二维切片 + 25 城市×角色 + 91 角色对比 + 35×14 技能矩阵 + 9 篇 blog + 诊断 / 报告路由）。
+> 用 8238+ 条真实 AI 岗位 JD 数据（runtime 拉 agent-hunt 8 个 endpoint），10 分钟告诉非程序员：你适合做什么 AI 岗位、缺什么技能、怎么补；如果你不想转行，怎么在原行业加 AI 技能让自己更值钱。**生产规模 223 个 static page + RSS feed**（14 角色 + 12 行业 + 65 二维切片 + 25 城市×角色 + 91 角色对比 + 35×14 技能矩阵 + 9 篇 blog + 首页 / 3 诊断页 / blog 索引 / positioner 路由）。
 
 **Live:** [aijobfit.llmxfactor.cloud](https://aijobfit.llmxfactor.cloud)
 
@@ -27,13 +27,14 @@
 - 扫码加小助理微信拿统一激活码 `AIJOB-2026` 解锁
 - 激活码永久有效（本设备 localStorage）
 
-数据来自开源项目 [Agent Hunt](https://github.com/LLM-X-Factorer/agent-hunt)（runtime 拉 7 个 endpoint，aijobfit 不存数据）：
-- 14 角色聚类 + 36 项 AI 技能词典
+数据来自开源项目 [Agent Hunt](https://github.com/LLM-X-Factorer/agent-hunt)（runtime 拉 8 个 endpoint，aijobfit 不存数据）：
+- 14 角色聚类 + 71 项 AI 技能词典（其中 35 项被角色 required/preferred 引用，进 /skills heatmap）
 - 行业 × AI 增强 JD 薪资分布
 - 14 角色 × 城市 tier 薪资
+- 行业 × 角色二维切片（agent-hunt #9）
 - 420 个原职业 × AI 增强真实 JD（Route C 数据基底）
 - 14 角色 × 应届友好度（应届分支用）
-- narrative-stats（jdTotal / 行业 breakdown / 幽灵岗等元数据）
+- narrative-stats（all_jobs / labeled_jobs / 行业 breakdown / 传统·互联网增强总数等元数据）
 
 ## 5 主线总览
 
@@ -47,12 +48,13 @@ A AI PM / B AI 运营 / C AI 转型咨询 / D AIGC 创意（A-D 是「转行」�
 - **行业切片**：cover/roles/salary 按用户行业（form 选 + currentJob 推断）切片。「教育 + PM」用户看教育切片 ¥14.5k/25k/37.5k，不是泛 25k 全国
 - **薪资达成概率**：填 35k 显示「约 X% 岗位能开到」（percentile 桶 75/50/25/10/5%），加城市 tier 对照「你所在新一线 ¥32k vs 全国 ¥30k +7%」
 - **路线 C 留行版**：Route C 用 readiness 4 档（第一梯队 / 中梯 / 起步 / 数据不足）替代「匹配率」语义，避免对长尾职业过度承诺
+- **简历素材体检（零 LLM）**：报告开放区一张「简历素材体检」卡（`ReportMaterialAudit`），纯客户端规则诊断——按句切分后跑技能命中 / 量化检测 / 大词黑名单（赋能 / 闭环 / 降本增效…）/ 句长过长四项规则，逐句出 chip（绿命中 / 黄缺量化 / 红大词 / 灰过长）+ 未提到的 keySkills tag cloud；audience-aware 标题（应届=实习经历体检 / 社招=项目经历体检），A/B/C 三路线都展示，只发 `material_audit_run` 计数事件不上传文本
 - **应届分支差异化**：audience=fresh-grad 时 cover.gradContext + roles.gradBreakdown + salary.freshComparison（「校招 ¥7.5k vs 社招 ¥25k +233%」）
 - **数据透明**：每个判断都附带 JD 来源（"基于 X 条真实 JD"）；首页 5 主线分支展示 keySkills / targetUsers / 实时 JD 数 / 中位月薪
 - **移动端优先**：375px 基线，微信 WebView 兼容
 - **分享友好**：动态 OG 图（1200×630 + 微信友好的方形 800×800）、1080×1920 竖版海报；按 route 切版式；每个 pSEO 页面带数据锚点的动态 OG
-- **GEO 站内基建**：`robots.txt` allow 19 个主流 LLM crawler（GPTBot / ClaudeBot / PerplexityBot / Google-Extended / Bytespider 等）+ `llms.txt`（llmstxt.org 标准）+ `sitemap.xml`（222 URL）+ Organization / WebSite / Dataset / FAQPage / Article / HowTo / Breadcrumb JSON-LD 全套 + GSC verification + RSS 2.0 feed at `/blog/feed.xml`（含 layout alternate link 全站发现）
-- **pSEO 路由（228 静态页）**：14 `/role/[id]` 角色画像 + 12 `/industry/[id]` 行业切片 + 65 `/industry/[id]/[role]` 二维切片（agent-hunt #9）+ 25 `/city/[tier]/[role]` 城市薪资 + 91 `/compare/[a]-vs-[b]` 角色对比 + `/skills` 35 技能 × 14 角色 SVG heatmap（含反向查表 + Article + Dataset LD）
+- **GEO 站内基建**：`robots.txt` allow 19 个主流 LLM crawler（GPTBot / ClaudeBot / PerplexityBot / Google-Extended / Bytespider 等）+ `llms.txt`（llmstxt.org 标准）+ `sitemap.xml`（223 URL）+ Organization / WebSite / Dataset / FAQPage / Article / HowTo / Breadcrumb JSON-LD 全套 + GSC verification + RSS 2.0 feed at `/blog/feed.xml`（含 layout alternate link 全站发现）
+- **pSEO 路由（223 静态页）**：14 `/role/[id]` 角色画像 + 12 `/industry/[id]` 行业切片 + 65 `/industry/[id]/[role]` 二维切片（agent-hunt #9）+ 25 `/city/[tier]/[role]` 城市薪资 + 91 `/compare/[a]-vs-[b]` 角色对比 + `/skills` 35 技能 × 14 角色 SVG heatmap（含反向查表 + Article + Dataset LD）
 - **Blog 系统**：`/blog` + `/blog/[slug]` 站内深度文章（PostShell + Article LD + 三路线 CTA），9 篇覆盖数据集深度 / 电气 / 教师 / 医生 / 销售 / 应届生 / 财务 / HR / 设计师
 - **HowTo schema**：`/diagnose` / `/diagnose-target` / `/diagnose-augment` 三路线注入 HowTo JSON-LD，让 AI 引擎在「如何做 AI 求职诊断」类 query 时召回
 - **/positioner 独立通道（v0.7.0）**：4 题 / 1 分钟 / 4 象限定位（Q1 方向已对 / Q2 有底子缺位置 / Q3 补认知框架 / Q4 先停下来）。`「不确定 ≥3」直接归 Q4` 的判定规则优先于分数判定，避免「高能力 × 低判断」被推进就业班；URL 用 4 位 `0/1/2` 编码（如 `/positioner/result/0011`），无后端依赖、可分享、刷新可重现；OG 图按象限差异化（Q4 amber 警示色 + 单 CTA，其余蓝主色 + 主副双 CTA）
@@ -76,7 +78,7 @@ npm install
 npm run dev             # http://localhost:3000
 npm run build           # 生产 standalone 构建
 npm run lint            # ESLint
-npx tsx scripts/verify-acceptance.ts  # 9 个端到端验收 case，拉 live agent-hunt 数据
+npx tsx scripts/verify-acceptance.ts  # 10 个端到端验收 case（C1-C10），拉 live agent-hunt 数据
 ```
 
 ## Docker 部署
@@ -142,12 +144,13 @@ src/
     blog/[slug]/page.tsx                  9 篇深度文章 SSG
     blog/feed.xml/route.ts                RSS 2.0 feed（force-static + 1h revalidate + atom self link）
     skills/page.tsx                       35 技能 × 14 角色 SVG heatmap（pure SSR + 反向查表 + Article + Dataset LD）
-    sitemap.ts                            sitemap.xml 生成（222 URL）
+    sitemap.ts                            sitemap.xml 生成（223 URL）
     robots.ts                             robots.txt 生成（19 LLM crawler allow）
     layout.tsx                            Org / WebSite / Dataset JSON-LD + GSC verification meta
   components/
     Report*.tsx                           7 节报告（按 route + audience 切渲染）
     ReportFallbackNotice.tsx              0-match 兜底提示
+    ReportMaterialAudit.tsx               简历素材体检卡（零 LLM 句级规则诊断，开放区，A/B/C 三路线）
     LockedSections.tsx                    后 4 节软门槛 + 激活码
     AssistantQR.tsx                       小助理微信 QR（next/image + unoptimized 保留 PNG 长按识别）
     DiagnosisForm.tsx                     路线 A 多步表单
@@ -164,6 +167,7 @@ src/
     blog/posts/*.tsx                      9 篇 blog 内容 component（应届分支新案例由 shushu 生成，见下方「案例文章生产」）
   lib/
     matching.ts                           14 角色匹配 + industry hard filter + whyMatched + trackFingerprint
+    materialAudit.ts                       简历素材句级规则诊断（技能命中 / 量化 / 大词黑名单 / 句长，沿用 matchTrackKeySkills 口径）
     professionMatch.ts                    free-text 原职业 → 420 entry 模糊匹配（exact + fuzzy + MIN_VACANCY 门槛）
     reportGen.ts                          7 节报告生成（A/B/C 三分发 + industry slice + achievement rate + city tier + grad slice + fingerprint scan）
     audience.ts                           fresh-grad / social 推断
@@ -172,7 +176,7 @@ src/
     db.ts                                 node:sqlite 单例 + 建表（events / submissions）
     useragent.ts                          isWeChat / isMobile
     ogFont.ts                             字体加载
-    fetchAgentHunt.ts                     7 个 endpoint 客户端 fetcher（远程优先）
+    fetchAgentHunt.ts                     8 个 endpoint 客户端 fetcher（远程优先）
     encoding.ts                           base64url 编码（route="A"|"B"|"C" + targetRoleId / originProfession）
     serverData.ts                         8 个 endpoint server loader（OG / SSR）
     ogUrl.ts                              dynamic OG query string builder（pSEO 用）
@@ -200,11 +204,12 @@ docs/
   pdf/                                    md 的 PDF 构建产物（直接发给业务方）
 scripts/
   build-docs-pdf.sh                       md → PDF（pandoc + Chrome headless）
-  verify-acceptance.ts                    9 个端到端验收 case
+  verify-acceptance.ts                    10 个端到端验收 case（C1-C10，含 C10 材料体检）
 public/
-  data/                                   agent-hunt 数据本地快照（fallback 用）
+  data/                                   agent-hunt 数据本地快照（roles-domestic.json + skills.json）
   qr-assistant.png                        小助理微信 QR
-  fonts/                                  Noto Sans SC woff2（OG 用）
+  llms.txt                                llmstxt.org 标准（GEO 用）
+  fonts/                                  Noto Sans SC woff2（OG 用，部署时放入；不入仓库，缺失则 ogFont.ts 回退 fonts.googleapis.cn）
 ```
 
 ## 数据流
